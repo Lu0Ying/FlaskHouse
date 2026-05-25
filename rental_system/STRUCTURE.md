@@ -14,6 +14,9 @@ rental_system/
 ├── README.md                     # 项目说明文档
 ├── PROJECT_SUMMARY.md            # 项目总结文档
 ├── DEPLOYMENT.md                 # 部署指南
+├── STRUCTURE.md                  # 项目结构说明
+├── CHECKLIST.md                  # 功能检查清单
+├── QUICKSTART.md                 # 快速参考指南
 │
 ├── app/                          # 主应用包
 │   ├── __init__.py              # 应用工厂、扩展初始化

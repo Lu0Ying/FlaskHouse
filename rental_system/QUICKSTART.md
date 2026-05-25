@@ -143,7 +143,12 @@ app/static/uploads/
 ```env
 # 必需配置
 SECRET_KEY=随机字符串
-DATABASE_URL=sqlite:///rental_system.db
+
+# 数据库配置 - MySQL（推荐）
+DATABASE_URL=mysql+pymysql://root:123456@localhost/rental_system
+
+# 数据库配置 - SQLite（开发测试）
+# DATABASE_URL=sqlite:///rental_system.db
 
 # 邮件配置（可选）
 MAIL_SERVER=smtp.gmail.com
