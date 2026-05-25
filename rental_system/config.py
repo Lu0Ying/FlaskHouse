@@ -10,7 +10,7 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'hard-to-guess-string'
     
     # 数据库配置
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///rental_system.db'
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///rental_system.db'  # 使用 SQLite 数据库
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # 邮件配置
