@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <!-- 搜索表单 -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3><i class="fas fa-search"></i> 搜索房源</h3>
+            </div>
+            <div class="card-body">
+                <form method="GET" action="{{ url_for('search.index') }}">
+                    <div class="mb-3">
+                        <label class="form-label">关键词</label>
+                        <input type="text" name="keyword" class="form-control" 
+                               placeholder="输入标题、地址等关键词"
+                               value="{{ request.args.get('keyword', '') }}">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">区域</label>
+                        <select name="district" class="form-select">
+                            <option value="">全部区域</option>
+                            <option value="朝阳区" {% if request.args.get('district') == '朝阳区' %}selected{% endif %}>朝阳区</option>
+                            <option value="海淀区" {% if request.args.get('district') == '海淀区' %}selected{% endif %}>海淀区</option>
+                            <option value="东城区" {% if request.args.get('district') == '东城区' %}selected{% endif %}>东城区</option>
+                            <option value="西城区" {% if request.args.get('district') == '西城区' %}selected{% endif %}>西城区</option>
+                            <option value="丰台区" {% if request.args.get('district') == '丰台区' %}selected{% endif %}>丰台区</option>
+                            <option value="石景山区" {% if request.args.get('district') == '石景山区' %}selected{% endif %}>石景山区</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">房屋类型</label>
+                        <select name="house_type" class="form-select">
+                            <option value="">全部类型</option>
+                            <option value="公寓" {% if request.args.get('house_type') == '公寓' %}selected{% endif %}>公寓</option>
+                            <option value="住宅" {% if request.args.get('house_type') == '住宅' %}selected{% endif %}>住宅</option>
+                            <option value="别墅" {% if request.args.get('house_type') == '别墅' %}selected{% endif %}>别墅</option>
+                            <option value="loft" {% if request.args.get('house_type') == 'loft' %}selected{% endif %}>Loft</option>
+                        </select>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <label class="form-label">最低租金</label>
+                            <input type="number" name="min_price" class="form-control" 
+                                   placeholder="0" min="0"
+                                   value="{{ request.args.get('min_price', '') }}">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">最高租金</label>
+                            <input type="number" name="max_price" class="form-control" 
+                                   placeholder="100000" min="0"
+                                   value="{{ request.args.get('max_price', '') }}">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <label class="form-label">最小面积</label>
+                            <input type="number" name="min_size" class="form-control" 
+                                   placeholder="0" min="0"
+                                   value="{{ request.args.get('min_size', '') }}">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">最大面积</label>
+                            <input type="number" name="max_size" class="form-control" 
+                                   placeholder="500" min="0"
+                                   value="{{ request.args.get('max_size', '') }}">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">户型</label>
+                        <select name="room_count" class="form-select">
+                            <option value="">全部户型</option>
+                            <option value="1室1厅" {% if request.args.get('room_count') == '1室1厅' %}selected{% endif %}>1室1厅</option>
+                            <option value="2室1厅" {% if request.args.get('room_count') == '2室1厅' %}selected{% endif %}>2室1厅</option>
+                            <option value="2室2厅" {% if request.args.get('room_count') == '2室2厅' %}selected{% endif %}>2室2厅</option>
+                            <option value="3室1厅" {% if request.args.get('room_count') == '3室1厅' %}selected{% endif %}>3室1厅</option>
+                            <option value="3室2厅" {% if request.args.get('room_count') == '3室2厅' %}selected{% endif %}>3室2厅</option>
+                            <option value="4室及以上" {% if request.args.get('room_count') == '4室及以上' %}selected{% endif %}>4室及以上</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">装修情况</label>
+                        <select name="decoration" class="form-select">
+                            <option value="">全部</option>
+                            <option value="精装" {% if request.args.get('decoration') == '精装' %}selected{% endif %}>精装</option>
+                            <option value="简装" {% if request.args.get('decoration') == '简装' %}selected{% endif %}>简装</option>
+                            <option value="毛坯" {% if request.args.get('decoration') == '毛坯' %}selected{% endif %}>毛坯</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">排序方式</label>
+                        <select name="sort_by" class="form-select">
+                            <option value="created_at" {% if request.args.get('sort_by') == 'created_at' or not request.args.get('sort_by') %}selected{% endif %}>最新发布</option>
+                            <option value="rent_price" {% if request.args.get('sort_by') == 'rent_price' %}selected{% endif %}>租金从低到高</option>
+                            <option value="rent_price_desc" {% if request.args.get('sort_by') == 'rent_price_desc' %}selected{% endif %}>租金从高到低</option>
+                            <option value="size" {% if request.args.get('sort_by') == 'size' %}selected{% endif %}>面积从大到小</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search"></i> 搜索
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 搜索结果 -->
+    <div class="col-md-8">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3>
+                {% if request.args.get('keyword') or request.args.get('district') or request.args.get('house_type') %}
+                搜索结果
+                {% else %}
+                智能推荐
+                {% endif %}
+            </h3>
+            <span class="text-muted">找到 {{ houses.total }} 套房源</span>
+        </div>
+        
+        <div class="row">
+            {% for house in houses.items %}
+            <div class="col-md-6 mb-4">
+                <div class="card house-card h-100">
+                    {% if house.get_images_list() %}
+                        <img src="{{ url_for('static', filename=house.get_images_list()[0]) }}" 
+                             class="card-img-top" alt="{{ house.title }}" 
+                             style="height: 180px; object-fit: cover;">
+                    {% else %}
+                        <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" 
+                             style="height: 180px;">
+                            <i class="fas fa-home text-white fa-3x"></i>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="card-body">
+                        <h5 class="card-title">{{ house.title }}</h5>
+                        <p class="card-text text-muted small">
+                            <i class="fas fa-map-marker-alt"></i> {{ house.district }} · {{ house.address }}
+                        </p>
+                        <p class="card-text small">
+                            {{ house.room_count }} · {{ house.size }}㎡ · {{ house.decoration or '未填写' }}
+                        </p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="text-primary mb-0">¥{{ house.rent_price }}/月</h6>
+                            <a href="{{ url_for('house.detail', id=house.id) }}" class="btn btn-sm btn-outline-primary">
+                                查看详情
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="col-12">
+                <div class="alert alert-info text-center">
+                    <i class="fas fa-info-circle fa-2x"></i>
+                    <p class="mt-2">没有找到符合条件的房源</p>
+                    <p class="small text-muted">请尝试调整搜索条件</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- 分页 -->
+        {% if houses.pages > 1 %}
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                {% if houses.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('search.index', page=houses.prev_num, **request.args) }}">上一页</a>
+                </li>
+                {% endif %}
+                
+                {% for page_num in houses.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                    {% if page_num %}
+                        <li class="page-item {% if page_num == houses.page %}active{% endif %}">
+                            <a class="page-link" href="{{ url_for('search.index', page=page_num, **request.args) }}">{{ page_num }}</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if houses.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('search.index', page=houses.next_num, **request.args) }}">下一页</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

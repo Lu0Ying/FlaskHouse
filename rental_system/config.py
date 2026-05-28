@@ -9,8 +9,8 @@ class Config:
     # Flask 核心配置
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'hard-to-guess-string'
     
-    # 数据库配置
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///rental_system.db'  # 使用 SQLite 数据库
+    # 数据库配置 - 使用 MySQL 数据库
+    SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://root:123456@localhost/rental_system'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # 邮件配置

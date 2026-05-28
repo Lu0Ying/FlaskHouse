@@ -101,6 +101,11 @@ class House(db.Model):
         return HouseMedia.query.filter_by(house_id=self.id, media_type='image').order_by(
             HouseMedia.order).all()
     
+    def get_images_list(self):
+        """获取图片路径列表"""
+        images = self.get_images()
+        return [img.url for img in images]
+    
     def get_videos(self):
         """获取所有视频"""
         return HouseMedia.query.filter_by(house_id=self.id, media_type='video').order_by(
