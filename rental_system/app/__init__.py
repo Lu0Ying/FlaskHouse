@@ -61,12 +61,15 @@ def create_app(config_class=Config):
     
     # 注册错误处理
     register_error_handlers(app)
-    
-    # 创建数据库表和初始管理员
+
+    # 自动初始化数据库
     with app.app_context():
-        db.create_all()
-        create_admin_user()
-    
+        try:
+            db.create_all()
+            create_admin_user()
+        except Exception as e:
+            print(f'数据库初始化警告: {e}')
+
     return app
 
 

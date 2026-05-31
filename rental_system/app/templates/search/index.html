@@ -21,12 +21,12 @@
                         <label class="form-label">区域</label>
                         <select name="district" class="form-select">
                             <option value="">全部区域</option>
-                            <option value="朝阳区" {% if request.args.get('district') == '朝阳区' %}selected{% endif %}>朝阳区</option>
-                            <option value="海淀区" {% if request.args.get('district') == '海淀区' %}selected{% endif %}>海淀区</option>
-                            <option value="东城区" {% if request.args.get('district') == '东城区' %}selected{% endif %}>东城区</option>
-                            <option value="西城区" {% if request.args.get('district') == '西城区' %}selected{% endif %}>西城区</option>
-                            <option value="丰台区" {% if request.args.get('district') == '丰台区' %}selected{% endif %}>丰台区</option>
-                            <option value="石景山区" {% if request.args.get('district') == '石景山区' %}selected{% endif %}>石景山区</option>
+                            <option value="朝阳区" {% if request.args.get('district') == '朝阳区' %}selected{% endif %}>北京市/朝阳区</option>
+                            <option value="海淀区" {% if request.args.get('district') == '海淀区' %}selected{% endif %}>北京市/海淀区</option>
+                            <option value="东城区" {% if request.args.get('district') == '东城区' %}selected{% endif %}>北京市/东城区</option>
+                            <option value="西城区" {% if request.args.get('district') == '西城区' %}selected{% endif %}>北京市/西城区</option>
+                            <option value="丰台区" {% if request.args.get('district') == '丰台区' %}selected{% endif %}>北京市/丰台区</option>
+                            <option value="石景山区" {% if request.args.get('district') == '石景山区' %}selected{% endif %}>北京市/石景山区</option>
                         </select>
                     </div>
                     
@@ -174,14 +174,14 @@
             <ul class="pagination justify-content-center">
                 {% if houses.has_prev %}
                 <li class="page-item">
-                    <a class="page-link" href="{{ url_for('search.index', page=houses.prev_num, **request.args) }}">上一页</a>
+                    <a class="page-link" href="{{ url_for('search.index', page=houses.prev_num, keyword=request.args.get('keyword', ''), district=request.args.get('district', ''), house_type=request.args.get('house_type', ''), min_price=request.args.get('min_price', ''), max_price=request.args.get('max_price', ''), min_size=request.args.get('min_size', ''), max_size=request.args.get('max_size', ''), room_count=request.args.get('room_count', ''), decoration=request.args.get('decoration', ''), sort_by=request.args.get('sort_by', 'created_at')) }}">上一页</a>
                 </li>
                 {% endif %}
                 
                 {% for page_num in houses.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
                     {% if page_num %}
                         <li class="page-item {% if page_num == houses.page %}active{% endif %}">
-                            <a class="page-link" href="{{ url_for('search.index', page=page_num, **request.args) }}">{{ page_num }}</a>
+                            <a class="page-link" href="{{ url_for('search.index', page=page_num, keyword=request.args.get('keyword', ''), district=request.args.get('district', ''), house_type=request.args.get('house_type', ''), min_price=request.args.get('min_price', ''), max_price=request.args.get('max_price', ''), min_size=request.args.get('min_size', ''), max_size=request.args.get('max_size', ''), room_count=request.args.get('room_count', ''), decoration=request.args.get('decoration', ''), sort_by=request.args.get('sort_by', 'created_at')) }}">{{ page_num }}</a>
                         </li>
                     {% else %}
                         <li class="page-item disabled"><span class="page-link">...</span></li>
@@ -190,7 +190,7 @@
                 
                 {% if houses.has_next %}
                 <li class="page-item">
-                    <a class="page-link" href="{{ url_for('search.index', page=houses.next_num, **request.args) }}">下一页</a>
+                    <a class="page-link" href="{{ url_for('search.index', page=houses.next_num, keyword=request.args.get('keyword', ''), district=request.args.get('district', ''), house_type=request.args.get('house_type', ''), min_price=request.args.get('min_price', ''), max_price=request.args.get('max_price', ''), min_size=request.args.get('min_size', ''), max_size=request.args.get('max_size', ''), room_count=request.args.get('room_count', ''), decoration=request.args.get('decoration', ''), sort_by=request.args.get('sort_by', 'created_at')) }}">下一页</a>
                 </li>
                 {% endif %}
             </ul>
