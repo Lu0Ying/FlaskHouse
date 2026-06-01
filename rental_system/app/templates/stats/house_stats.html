@@ -49,9 +49,7 @@
                         <td>{{ item.total_contracts }}</td>
                         <td>
                             <div class="progress" style="width: 150px;">
-                                <div class="progress-bar {% if item.occupancy_rate >= 80 %}bg-success{% elif item.occupancy_rate >= 50 %}bg-warning{% else %}bg-danger{% endif %}" 
-                                     role="progressbar" 
-                                     style="width: {{ item.occupancy_rate }}%">
+                                <div class="progress-bar {% if item.occupancy_rate >= 80 %}bg-success{% elif item.occupancy_rate >= 50 %}bg-warning{% else %}bg-danger{% endif %}" role="progressbar" style="width: {{ item.occupancy_rate }}%">
                                     {{ item.occupancy_rate|round(1) }}%
                                 </div>
                             </div>

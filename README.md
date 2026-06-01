@@ -38,40 +38,51 @@ source venv/bin/activate   # Linux/Mac
 pip install -r requirements.txt
 
 # 5. 初始化数据库（两种方式选其一）
-# 方式 A：使用脚本自动初始化
+# 方式 A：使用脚本自动初始化（仅创建表结构）
 python setup_database.py
+# 方式 A2：使用脚本自动初始化（创建表结构 + 导入完整示例数据）
+python setup_database.py --import-data
 # 方式 B：手动执行 SQL
 mysql -u root -p < init_mysql.sql
+# 方式 B2：手动执行 SQL（创建表结构 + 导入完整示例数据）
+mysql -u root -p rental_system < rental_system.sql
 
-# 6. 初始化行政区划数据
-python -m app.data
-
-# 7. 启动应用
+# 6. 启动应用
 python run.py
 ```
 
-访问 http://localhost:5000
+访问 <http://localhost:5000>
 
-## 默认管理员账户
+## 默认账户
+
+### 管理员账户
 
 - **邮箱**: admin@rentalsystem.com
 - **密码**: admin123
+
+### 示例用户账户（导入示例数据后可用）
+
+- **房东**: landlord1 / password123
+- **租客**: tenant1 / password123
 
 ## 数据库配置
 
 ### MySQL（推荐）
 
 编辑 `rental_system/.env` 文件：
+
 ```env
 DATABASE_URL=mysql+pymysql://root:123456@localhost/rental_system
 ```
 
 或者修改 `config.py`：
+
 ```python
 SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://root:123456@localhost/rental_system'
 ```
 
 ### SQLite（开发测试）
+
 ```env
 DATABASE_URL=sqlite:///rental_system.db
 ```
@@ -79,11 +90,12 @@ DATABASE_URL=sqlite:///rental_system.db
 ## 配置文件说明
 
 | 文件 | 功能 |
-|------|------|
+| --- | --- |
 | `config.py` | 应用核心配置（数据库连接、邮件服务、文件上传等） |
 | `setup_database.py` | 数据库初始化脚本（创建库、执行SQL、初始化数据） |
 | `start.bat` | Windows 一键启动脚本（创建虚拟环境、安装依赖、启动应用） |
-| `init_mysql.sql` | MySQL 数据库初始化 SQL 文件 |
+| `init_mysql.sql` | MySQL 数据库初始化 SQL 文件（仅表结构） |
+| `rental_system.sql` | MySQL 数据库完整备份文件（表结构 + 示例数据） |
 | `app/data/__init__.py` | 地区数据初始化函数 |
 | `app/data/regions_data.py` | 行政区划数据（省/市/区） |
 
@@ -128,7 +140,7 @@ FlaskHouse/
 ## 文档说明
 
 | 文件 | 说明 |
-|------|------|
+| --- | --- |
 | `rental_system/README.md` | 应用详细说明 |
 | `rental_system/QUICKSTART.md` | 快速参考指南 |
 | `rental_system/PROJECT_SUMMARY.md` | 项目功能总结 |

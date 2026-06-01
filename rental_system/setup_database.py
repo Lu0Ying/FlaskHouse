@@ -6,6 +6,8 @@
     python setup_database.py
     或
     python setup_database.py --host localhost --user root --password your_password
+    或
+    python setup_database.py --import-data  # 导入完整示例数据
 
 确保已安装依赖:
     pip install pymysql
@@ -14,7 +16,6 @@
 import argparse
 import pymysql
 import os
-import sys
 
 def parse_args():
     """解析命令行参数"""
@@ -24,6 +25,7 @@ def parse_args():
     parser.add_argument('--user', default='root', help='MySQL 用户名')
     parser.add_argument('--password', default='123456', help='MySQL 密码')
     parser.add_argument('--database', default='rental_system', help='数据库名称')
+    parser.add_argument('--import-data', action='store_true', help='导入完整示例数据（包含房源、用户等）')
     return parser.parse_args()
 
 def print_info(message):
@@ -38,12 +40,12 @@ def execute_sql_statements(connection, sql_statements):
     cursor = connection.cursor()
     success_count = 0
     fail_count = 0
-    
+
     for i, statement in enumerate(sql_statements):
         statement = statement.strip()
         if not statement or statement.startswith('--'):
             continue
-        
+
         try:
             cursor.execute(statement)
             connection.commit()
@@ -54,13 +56,13 @@ def execute_sql_statements(connection, sql_statements):
             print_info(f'[FAIL] 执行语句 {i+1} 失败: {e}')
             print_info(f'   SQL: {statement[:100]}...')
             connection.rollback()
-    
+
     cursor.close()
     return success_count, fail_count
 
 def main():
     args = parse_args()
-    
+
     print_info('=' * 60)
     print_info('智能房屋租赁系统 - MySQL 数据库初始化')
     print_info('=' * 60)
@@ -69,7 +71,7 @@ def main():
     print_info(f'  用户: {args.user}')
     print_info(f'  数据库: {args.database}')
     print_info('=' * 60)
-    
+
     try:
         connection = pymysql.connect(
             host=args.host,
@@ -78,82 +80,117 @@ def main():
             password=args.password,
             charset='utf8mb4'
         )
-        
+
         print_info('[OK] 成功连接到 MySQL 服务器')
-        
+
         cursor = connection.cursor()
         cursor.execute(f"CREATE DATABASE IF NOT EXISTS {args.database} DEFAULT CHARACTER SET utf8mb4")
         cursor.execute(f"USE {args.database}")
         connection.commit()
         cursor.close()
-        
+
         print_info(f'[OK] 成功创建/选择数据库: {args.database}')
-        
+
         sql_file_path = os.path.join(os.path.dirname(__file__), 'init_mysql.sql')
-        
+
         if not os.path.exists(sql_file_path):
             print_info(f'[FAIL] SQL 文件不存在: {sql_file_path}')
             return
-        
+
         print_info(f'\n开始执行 SQL 文件: {sql_file_path}')
         print_info('-' * 60)
-        
-        # 读取并分割 SQL 文件
+
         with open(sql_file_path, 'r', encoding='utf-8') as f:
             content = f.read()
-        
-        # 按分号分割，但要处理字符串中的分号
+
         statements = []
         current = ''
         in_string = False
         string_char = ''
         comment_block = False
-        
+
         for char in content:
-            # 处理多行注释
             if char == '/' and not in_string:
-                # 检查下一个字符
                 peek = content[content.index(char) + 1] if content.index(char) + 1 < len(content) else ''
                 if peek == '*':
                     comment_block = True
                     current += char
                     continue
-            
+
             if comment_block:
                 current += char
                 if char == '*' and content[content.index(char) + 1] == '/':
                     comment_block = False
                 continue
-            
-            # 处理字符串边界
+
             if (char == "'" or char == '"') and not comment_block:
                 if not in_string:
                     in_string = True
                     string_char = char
                 elif string_char == char:
-                    # 检查是否是转义字符
                     if current[-1] != '\\':
                         in_string = False
-            
-            # 遇到分号且不在字符串中时，结束当前语句
+
             if char == ';' and not in_string and not comment_block:
                 statements.append(current.strip())
                 current = ''
             else:
                 current += char
-        
-        # 添加最后一个语句（如果有）
+
         if current.strip():
             statements.append(current.strip())
-        
+
         print_info(f'共解析到 {len(statements)} 条 SQL 语句')
-        
-        # 执行所有语句
+
         success_count, fail_count = execute_sql_statements(connection, statements)
-        
+
         print_info('-' * 60)
         print_info(f'执行完成! 成功: {success_count}, 失败: {fail_count}')
-        
+
+        if fail_count == 0 and args.import_data:
+            print_info('')
+            print_info('=' * 60)
+            print_info('开始导入完整示例数据...')
+            print_info('=' * 60)
+
+            data_sql_file = os.path.join(os.path.dirname(__file__), 'rental_system.sql')
+
+            if not os.path.exists(data_sql_file):
+                print_info(f'[FAIL] 数据文件不存在: {data_sql_file}')
+            else:
+                print_info(f'开始执行数据文件: {data_sql_file}')
+
+                with open(data_sql_file, 'r', encoding='utf-8') as f:
+                    data_content = f.read()
+
+                data_statements = []
+                current = ''
+                in_string = False
+                string_char = ''
+
+                for char in data_content:
+                    if char == ';' and not in_string:
+                        data_statements.append(current.strip())
+                        current = ''
+                    else:
+                        if (char == "'" or char == '"'):
+                            if not in_string:
+                                in_string = True
+                                string_char = char
+                            elif string_char == char and current[-1] != '\\':
+                                in_string = False
+                        current += char
+
+                if current.strip():
+                    data_statements.append(current.strip())
+
+                print_info(f'共解析到 {len(data_statements)} 条数据导入语句')
+
+                data_success, data_fail = execute_sql_statements(connection, data_statements)
+
+                print_info('-' * 60)
+                print_info(f'数据导入完成! 成功: {data_success}, 失败: {data_fail}')
+
         if fail_count == 0:
             print_info('')
             print_info('数据库初始化完成！')
@@ -162,12 +199,16 @@ def main():
             print_info('  邮箱: admin@rentalsystem.com')
             print_info('  密码: admin123')
             print_info('')
+            print_info('示例用户账户:')
+            print_info('  房东: landlord1 / password123')
+            print_info('  租客: tenant1 / password123')
+            print_info('')
             print_info('下一步:')
             print_info('  1. 确保 .env 文件中的数据库配置正确')
             print_info('  2. 运行 python run.py 启动应用')
-        
+
         connection.close()
-        
+
     except pymysql.err.OperationalError as e:
         print_info(f'[FAIL] 数据库连接失败: {e}')
         print_info('请检查:')
