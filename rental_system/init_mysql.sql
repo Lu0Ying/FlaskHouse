@@ -10,6 +10,9 @@ DEFAULT COLLATE utf8mb4_unicode_ci;
 
 USE rental_system;
 
+-- 临时禁用外键检查，避免 DROP TABLE 顺序问题
+SET FOREIGN_KEY_CHECKS = 0;
+
 -- ==============================================
 -- 1. 用户表 (users)
 -- ==============================================
@@ -282,29 +285,65 @@ CREATE TABLE system_logs (
     INDEX idx_system_logs_created_at (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统日志表';
 
+-- 恢复外键检查
+SET FOREIGN_KEY_CHECKS = 1;
+
 -- ==============================================
 -- 插入初始数据
 -- ==============================================
 
 -- 插入默认管理员账户
--- 密码为: admin123 (bcrypt加密)
+-- 密码为: admin123 (pbkdf2:sha256 Werkzeug加密)
 INSERT INTO users (username, email, password_hash, real_name, role, status)
-VALUES ('admin', 'admin@rentalsystem.com', '$2b$12$EixZaYbB.rK4fl8x2q7Meu6Q6D2V5fF5Q5Q5Q5Q5Q5Q5Q5Q5Q', '系统管理员', 'admin', 'active');
+VALUES ('admin', 'admin@rentalsystem.com', 'pbkdf2:sha256:600000$ARS4BLpOEfTGpLmd$cbc65d5a6de44b9132c6ebd9039e97096c128216ea61486b8722a47771774c77', '系统管理员', 'admin', 'active');
 
 -- 插入示例房东账户
+-- 密码为: password123 (pbkdf2:sha256 Werkzeug加密)
 INSERT INTO users (username, email, password_hash, real_name, role, status)
-VALUES ('landlord1', 'landlord@example.com', '$2b$12$EixZaYbB.rK4fl8x2q7Meu6Q6D2V5fF5Q5Q5Q5Q5Q5Q5Q5Q5Q', '张房东', 'landlord', 'active');
+VALUES ('landlord1', 'landlord@example.com', 'pbkdf2:sha256:600000$ktXC3kuEYXgCtl9S$a2b40d7ca91d548722e4ae86380f78f145751015cd8b3420da5bfe06f59c023d', '张房东', 'landlord', 'active');
 
 -- 插入示例租客账户
+-- 密码为: password123 (pbkdf2:sha256 Werkzeug加密)
 INSERT INTO users (username, email, password_hash, real_name, role, status)
-VALUES ('tenant1', 'tenant@example.com', '$2b$12$EixZaYbB.rK4fl8x2q7Meu6Q6D2V5fF5Q5Q5Q5Q5Q5Q5Q5Q5Q', '李租客', 'tenant', 'active');
+VALUES ('tenant1', 'tenant@example.com', 'pbkdf2:sha256:600000$ktXC3kuEYXgCtl9S$a2b40d7ca91d548722e4ae86380f78f145751015cd8b3420da5bfe06f59c023d', '李租客', 'tenant', 'active');
 
--- 插入示例房源
-INSERT INTO houses (landlord_id, title, address, district, area, type, room_count, size, rent_price, deposit, decoration, description, status)
-VALUES (2, '市中心精装两居室', '北京市朝阳区建国路88号', '朝阳区', 'CBD', '公寓', '2室1厅', 85.5, 5500, 11000, '精装', '位于CBD核心区域，交通便利，周边配套齐全，拎包入住。', 'available');
+-- 插入示例房源（10个房源）
+INSERT INTO houses (landlord_id, title, address, district, area, type, room_count, size, rent_price, deposit, decoration, description, status, province_code, city_code, district_code, created_at, updated_at)
+VALUES 
+(2, 'CBD核心精装两居', '北京市朝阳区建国路88号SOHO现代城', '朝阳区', 'CBD', '公寓', '2室1厅', 85.5, 5500, 11000, '精装', '位于CBD核心区域，地铁1号线大望路站步行5分钟，周边配套齐全，拎包入住。', 'available', NULL, NULL, NULL, '2026-05-31 16:23:54', '2026-05-31 16:23:54'),
+(2, '中关村学区三居室', '北京市海淀区中关村大街1号科技大厦', '海淀区', '中关村', '住宅', '3室2厅', 120, 8000, 16000, '简装', '学区房，临近中关村一小，地铁4号线中关村站步行3分钟，适合家庭居住。', 'available', NULL, NULL, NULL, '2026-05-31 16:23:54', '2026-05-31 16:23:54'),
+(2, '王府井精装一居', '北京市东城区王府井大街10号乐天银泰', '东城区', '王府井', '公寓', '1室1厅', 55, 4200, 8400, '精装', '繁华商业区，购物便利，地铁1号线王府井站直达。', 'available', NULL, NULL, NULL, '2026-05-31 16:23:54', '2026-05-31 16:23:54'),
+(2, '金融街舒适两居', '北京市西城区金融街20号国际企业大厦', '西城区', '金融街', '住宅', '2室1厅', 78, 6200, 12400, '精装', '金融中心地段，办公便利，生活配套完善，临近地铁2号线。', 'available', NULL, NULL, NULL, '2026-05-31 16:23:54', '2026-05-31 16:23:54'),
+(2, '方庄成熟社区大三居', '北京市丰台区方庄路15号芳城园', '丰台区', '方庄', '住宅', '3室2厅', 135, 7500, 15000, '精装', '成熟社区，配套齐全，临近方庄购物中心，适合大家庭居住。', 'available', NULL, NULL, NULL, '2026-05-31 16:23:54', '2026-05-31 16:23:54'),
+(2, '古城Loft公寓', '北京市石景山区古城路8号绿地环球金融城', '石景山区', '古城', 'loft', '1室1厅', 45, 3800, 7600, '简装', 'Loft户型，挑高4.5米，适合年轻人居住，地铁1号线古城站直达。', 'available', NULL, NULL, NULL, '2026-05-31 16:23:54', '2026-05-31 16:23:54'),
+(2, '朝阳公园旁精装公寓', '北京市朝阳区朝阳公园路19号棕榈泉国际公寓', '朝阳区', '朝阳公园', '公寓', '2室2厅', 95, 6800, 13600, '精装', '紧邻朝阳公园，环境优美，空气清新，高端社区配套。', 'available', NULL, NULL, NULL, '2026-05-31 16:23:54', '2026-05-31 16:23:54'),
+(2, '五道口精装三居室', '北京市海淀区成府路28号华清嘉园', '海淀区', '五道口', '住宅', '3室1厅', 105, 7200, 14400, '简装', '高校云集，学术氛围浓厚，地铁13号线五道口站步行5分钟。', 'available', NULL, NULL, NULL, '2026-05-31 16:23:54', '2026-05-31 16:23:54'),
+(2, '望京SOHO附近公寓', '北京市朝阳区望京街9号望京SOHO', '朝阳区', '望京', '公寓', '1室1厅', 48, 4500, 9000, '精装', '望京商圈核心，办公居住两相宜，地铁14号线望京南站直达。', 'available', NULL, NULL, NULL, '2026-05-31 16:23:54', '2026-05-31 16:23:54'),
+(2, '通州核心精装四居', '北京市通州区新华大街50号万达公寓', '通州区', '通州城区', '住宅', '4室2厅', 168, 9500, 19000, '精装', '大型社区，配套完善，临近万达广场，适合多孩家庭。', 'available', NULL, NULL, NULL, '2026-05-31 16:23:54', '2026-05-31 16:23:54');
 
-INSERT INTO houses (landlord_id, title, address, district, area, type, room_count, size, rent_price, deposit, decoration, description, status)
-VALUES (2, '温馨三居室', '北京市海淀区中关村大街1号', '海淀区', '中关村', '住宅', '3室2厅', 120, 8000, 16000, '简装', '学区房，临近地铁站，适合家庭居住。', 'available');
+-- 插入房源图片（house_media）
+-- 图片命名格式: {house_id}_{order}.png
+-- order=0 的图片为列表展示图，order>0 的图片为详情页轮播图
+INSERT INTO house_media (house_id, media_type, url, `order`, created_at)
+VALUES 
+(1, 'image', 'uploads/1_0.png', 0, '2026-05-31 16:23:54'),
+(1, 'image', 'uploads/1_1.png', 1, '2026-05-31 16:23:54'),
+(2, 'image', 'uploads/2_0.png', 0, '2026-05-31 16:23:54'),
+(2, 'image', 'uploads/2_1.png', 1, '2026-05-31 16:23:54'),
+(3, 'image', 'uploads/3_0.png', 0, '2026-05-31 16:23:54'),
+(3, 'image', 'uploads/3_1.png', 1, '2026-05-31 16:23:54'),
+(3, 'image', 'uploads/3_2.png', 2, '2026-05-31 16:23:54'),
+(4, 'image', 'uploads/4_0.png', 0, '2026-05-31 16:23:54'),
+(4, 'image', 'uploads/4_1.png', 1, '2026-05-31 16:23:54'),
+(5, 'image', 'uploads/5_0.png', 0, '2026-05-31 16:23:54'),
+(5, 'image', 'uploads/5_1.png', 1, '2026-05-31 16:23:54'),
+(6, 'image', 'uploads/6_0.png', 0, '2026-05-31 16:23:54'),
+(6, 'image', 'uploads/6_1.png', 1, '2026-05-31 16:23:54'),
+(7, 'image', 'uploads/7_0.png', 0, '2026-05-31 16:23:54'),
+(8, 'image', 'uploads/8_0.png', 0, '2026-05-31 16:23:54'),
+(9, 'image', 'uploads/9_0.png', 0, '2026-05-31 16:23:54'),
+(9, 'image', 'uploads/9_1.png', 1, '2026-05-31 16:23:54'),
+(10, 'image', 'uploads/10_0.png', 0, '2026-05-31 16:23:54');
 
 -- 插入示例新闻公告
 INSERT INTO news (publisher_id, title, content, category, status, published_at)
@@ -318,6 +357,7 @@ VALUES (1, '平台新功能上线', '<p>我们很高兴地宣布，平台新增�
 -- ==============================================
 
 -- 活跃合同视图
+DROP VIEW IF EXISTS v_active_contracts;
 CREATE VIEW v_active_contracts AS
 SELECT 
     lc.*,
@@ -332,6 +372,7 @@ JOIN users u2 ON lc.landlord_id = u2.id
 WHERE lc.status = 'active';
 
 -- 用户统计视图
+DROP VIEW IF EXISTS v_user_stats;
 CREATE VIEW v_user_stats AS
 SELECT 
     role,

@@ -111,6 +111,25 @@ CREATE TABLE `house_media` (
 
 LOCK TABLES `house_media` WRITE;
 /*!40000 ALTER TABLE `house_media` DISABLE KEYS */;
+INSERT INTO `house_media` VALUES 
+(1,1,'image','uploads/1_0.png',0,'2026-05-31 16:23:54'),
+(2,1,'image','uploads/1_1.png',1,'2026-05-31 16:23:54'),
+(3,2,'image','uploads/2_0.png',0,'2026-05-31 16:23:54'),
+(4,2,'image','uploads/2_1.png',1,'2026-05-31 16:23:54'),
+(5,3,'image','uploads/3_0.png',0,'2026-05-31 16:23:54'),
+(6,3,'image','uploads/3_1.png',1,'2026-05-31 16:23:54'),
+(7,3,'image','uploads/3_2.png',2,'2026-05-31 16:23:54'),
+(8,4,'image','uploads/4_0.png',0,'2026-05-31 16:23:54'),
+(9,4,'image','uploads/4_1.png',1,'2026-05-31 16:23:54'),
+(10,5,'image','uploads/5_0.png',0,'2026-05-31 16:23:54'),
+(11,5,'image','uploads/5_1.png',1,'2026-05-31 16:23:54'),
+(12,6,'image','uploads/6_0.png',0,'2026-05-31 16:23:54'),
+(13,6,'image','uploads/6_1.png',1,'2026-05-31 16:23:54'),
+(14,7,'image','uploads/7_0.png',0,'2026-05-31 16:23:54'),
+(15,8,'image','uploads/8_0.png',0,'2026-05-31 16:23:54'),
+(16,9,'image','uploads/9_0.png',0,'2026-05-31 16:23:54'),
+(17,9,'image','uploads/9_1.png',1,'2026-05-31 16:23:54'),
+(18,10,'image','uploads/10_0.png',0,'2026-05-31 16:23:54');
 /*!40000 ALTER TABLE `house_media` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -457,7 +476,7 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (1,'admin','pbkdf2:sha256:600000$qG6E2asrbeqUksjY$bcaf9064a190bd97a418d98557a1491f68fea51962697712ad21e0af1bef7ce0','admin@rentalsystem.com',NULL,'admin','系统管理员',NULL,NULL,'active','2026-05-31 16:23:54'),(2,'landlord1','pbkdf2:sha256:600000$M5jSlnqSyDAvzaBN$afa74df3d6e12299d3f7439804acc529c09ddb490ead9823a8c125d84617a65f','landlord@example.com',NULL,'landlord','张房东',NULL,NULL,'active','2026-05-31 16:23:54'),(3,'tenant1','pbkdf2:sha256:600000$OLlVukATx9G6pQ7G$7ac3a1a4663cca65a4134ac30f9050f27af94e77bed7cd53ec2663ab3105afb2','tenant@example.com',NULL,'tenant','李租客',NULL,NULL,'active','2026-05-31 16:23:54');
+INSERT INTO `users` VALUES (1,'admin','pbkdf2:sha256:600000$ARS4BLpOEfTGpLmd$cbc65d5a6de44b9132c6ebd9039e97096c128216ea61486b8722a47771774c77','admin@rentalsystem.com',NULL,'admin','系统管理员',NULL,NULL,'active','2026-05-31 16:23:54'),(2,'landlord1','pbkdf2:sha256:600000$ktXC3kuEYXgCtl9S$a2b40d7ca91d548722e4ae86380f78f145751015cd8b3420da5bfe06f59c023d','landlord@example.com',NULL,'landlord','张房东',NULL,NULL,'active','2026-05-31 16:23:54'),(3,'tenant1','pbkdf2:sha256:600000$ktXC3kuEYXgCtl9S$a2b40d7ca91d548722e4ae86380f78f145751015cd8b3420da5bfe06f59c023d','tenant@example.com',NULL,'tenant','李租客',NULL,NULL,'active','2026-05-31 16:23:54');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;

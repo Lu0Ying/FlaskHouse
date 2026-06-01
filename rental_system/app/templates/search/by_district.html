@@ -10,8 +10,8 @@
     {% for house in houses.items %}
     <div class="col-md-4 mb-3">
         <div class="card house-card h-100">
-            {% if house.get_images() %}
-            <img src="{{ house.get_images()[0].url }}" class="card-img-top" style="height: 180px; object-fit: cover;" alt="{{ house.title }}">
+            {% if house.get_images_list() %}
+            <img src="{{ url_for('static', filename=house.get_images_list()[0]) }}" class="card-img-top" style="height: 180px; object-fit: cover;" alt="{{ house.title }}">
             {% else %}
             <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" style="height: 180px;">
                 <i class="bi bi-house text-white" style="font-size: 3rem;"></i>
