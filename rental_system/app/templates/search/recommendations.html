@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}智能推荐{% endblock %}
+{% block content %}
+<h2 class="mb-4"><i class="bi bi-star"></i> 智能推荐房源</h2>
+
+<div class="row">
+    {% if houses.items %}
+    {% for house in houses.items %}
+    <div class="col-md-4 mb-3">
+        <div class="card house-card h-100">
+            {% if house.get_images() %}
+            <img src="{{ house.get_images()[0].url }}" class="card-img-top" style="height: 180px; object-fit: cover;" alt="{{ house.title }}">
+            {% else %}
+            <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" style="height: 180px;">
+                <i class="bi bi-house text-white" style="font-size: 3rem;"></i>
+            </div>
+            {% endif %}
+            <div class="card-body">
+                <h5 class="card-title text-truncate">{{ house.title }}</h5>
+                <p class="card-text text-muted small">
+                    <i class="bi bi-geo-alt"></i> {{ house.address }}
+                </p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-primary fw-bold h5">¥{{ house.rent_price }}/月</span>
+                    <span class="badge bg-secondary">{{ house.room_count }}</span>
+                </div>
+                <div class="mt-2">
+                    <small class="text-muted">{{ house.size }}㎡ | {{ house.decoration }}</small>
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('house.detail', id=house.id) }}" class="btn btn-sm btn-outline-primary w-100">查看详情</a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="col-12">
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> 暂无推荐房源
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% if houses.has_prev or houses.has_next %}
+<nav>
+    <ul class="pagination justify-content-center">
+        {% if houses.has_prev %}
+        <li class="page-item"><a class="page-link" href="{{ url_for('search.recommendations', page=houses.prev_num) }}">上一页</a></li>
+        {% endif %}
+        <li class="page-item disabled"><span class="page-link">第 {{ houses.page }} / {{ houses.pages }} 页</span></li>
+        {% if houses.has_next %}
+        <li class="page-item"><a class="page-link" href="{{ url_for('search.recommendations', page=houses.next_num) }}">下一页</a></li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}

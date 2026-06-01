@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}统计报表 - 用户统计{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-bar-chart"></i> 用户统计</h2>
+    <div class="btn-group" role="group">
+        <a href="{{ url_for('stats.house_stats') }}" class="btn btn-outline-secondary">房源统计</a>
+        <a href="{{ url_for('stats.revenue_stats') }}" class="btn btn-outline-secondary">收入统计</a>
+        <a href="{{ url_for('stats.user_stats') }}" class="btn btn-primary">用户统计</a>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('stats.user_stats') }}" class="form-inline">
+            <div class="form-group mr-3">
+                <label for="days" class="mr-2">统计天数:</label>
+                <select name="days" id="days" class="form-control">
+                    <option value="7" {% if days == 7 %}selected{% endif %}>7天</option>
+                    <option value="14" {% if days == 14 %}selected{% endif %}>14天</option>
+                    <option value="30" {% if days == 30 %}selected{% endif %}>30天</option>
+                    <option value="90" {% if days == 90 %}selected{% endif %}>90天</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">查询</button>
+        </form>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">每日活跃用户</h5>
+            </div>
+            <div class="card-body">
+                {% if chart_data %}
+                <div class="chart-container" style="height: 250px;">
+                    <canvas id="activityChart"></canvas>
+                </div>
+                {% else %}
+                <p class="text-center text-muted">暂无数据</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">活跃用户排行</h5>
+            </div>
+            <div class="card-body">
+                {% if top_users %}
+                <ul class="list-group">
+                    {% for user in top_users %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>{{ loop.index }}. {{ user.username }}</span>
+                        <span class="badge bg-primary">{{ user.activity_count }} 次</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-center text-muted">暂无数据</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    var ctx = document.getElementById('activityChart').getContext('2d');
+    var chartData = {{ chart_data|tojson|safe }};
+    
+    var dates = chartData.map(function(item) { return item.date; });
+    var counts = chartData.map(function(item) { return item.count; });
+    
+    var chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: dates,
+            datasets: [{
+                label: '活跃用户数',
+                data: counts,
+                borderColor: 'rgba(75, 192, 192, 1)',
+                backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                fill: true,
+                tension: 0.3
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

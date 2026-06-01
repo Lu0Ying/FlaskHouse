@@ -1,5 +1,154 @@
 {% extends "base.html" %}
-{% block title %}Page{% endblock %}
+{% block title %}智能搜索{% endblock %}
 {% block content %}
-<h1>Page Title</h1>
+<h2 class="mb-4"><i class="bi bi-search"></i> 智能搜索房源</h2>
+
+<div class="row">
+    <div class="col-md-3">
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">筛选条件</h5>
+            </div>
+            <div class="card-body">
+                <form method="get" action="{{ url_for('search.search') }}">
+                    <div class="mb-3">
+                        <label class="form-label">关键词</label>
+                        <input type="text" name="keyword" class="form-control" placeholder="小区/地址/标题" value="{{ keyword }}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">区域</label>
+                        <select name="district" class="form-select">
+                            <option value="">全部区域</option>
+                            {% for d in districts %}
+                            <option value="{{ d.name }}" {% if district == d.name %}selected{% endif %}>{{ d.name }} ({{ d.count }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">户型</label>
+                        <select name="room_count" class="form-select">
+                            <option value="">全部户型</option>
+                            {% for r in room_counts %}
+                            <option value="{{ r.name }}" {% if room_count == r.name %}selected{% endif %}>{{ r.name }} ({{ r.count }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">租金范围</label>
+                        <div class="input-group">
+                            <input type="number" name="min_price" class="form-control" placeholder="最低" value="{{ min_price }}">
+                            <span class="input-group-text">-</span>
+                            <input type="number" name="max_price" class="form-control" placeholder="最高" value="{{ max_price }}">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">面积范围 (㎡)</label>
+                        <div class="input-group">
+                            <input type="number" name="min_size" class="form-control" placeholder="最小" value="{{ min_size }}">
+                            <span class="input-group-text">-</span>
+                            <input type="number" name="max_size" class="form-control" placeholder="最大" value="{{ max_size }}">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">房屋类型</label>
+                        <select name="house_type" class="form-select">
+                            <option value="">全部</option>
+                            <option value="公寓" {% if house_type == '公寓' %}selected{% endif %}>公寓</option>
+                            <option value="住宅" {% if house_type == '住宅' %}selected{% endif %}>住宅</option>
+                            <option value="别墅" {% if house_type == '别墅' %}selected{% endif %}>别墅</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">装修情况</label>
+                        <select name="decoration" class="form-select">
+                            <option value="">全部</option>
+                            <option value="精装" {% if decoration == '精装' %}selected{% endif %}>精装</option>
+                            <option value="简装" {% if decoration == '简装' %}selected{% endif %}>简装</option>
+                            <option value="毛坯" {% if decoration == '毛坯' %}selected{% endif %}>毛坯</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">排序方式</label>
+                        <select name="sort_by" class="form-select">
+                            <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>最新发布</option>
+                            <option value="rent_price" {% if sort_by == 'rent_price' %}selected{% endif %}>租金从低到高</option>
+                            <option value="rent_price_desc" {% if sort_by == 'rent_price_desc' %}selected{% endif %}>租金从高到低</option>
+                            <option value="size" {% if sort_by == 'size' %}selected{% endif %}>面积从大到小</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i> 搜索
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-9">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <span>共找到 <strong>{{ houses.total }}</strong> 个房源</span>
+        </div>
+
+        {% if houses.items %}
+        <div class="row">
+            {% for house in houses.items %}
+            <div class="col-md-4 mb-3">
+                <div class="card house-card h-100">
+                    {% if house.get_images() %}
+                    <img src="{{ house.get_images()[0].url }}" class="card-img-top" style="height: 180px; object-fit: cover;" alt="{{ house.title }}">
+                    {% else %}
+                    <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" style="height: 180px;">
+                        <i class="bi bi-house text-white" style="font-size: 3rem;"></i>
+                    </div>
+                    {% endif %}
+                    <div class="card-body">
+                        <h5 class="card-title text-truncate">{{ house.title }}</h5>
+                        <p class="card-text text-muted small">
+                            <i class="bi bi-geo-alt"></i> {{ house.address }}
+                        </p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-primary fw-bold h5">¥{{ house.rent_price }}/月</span>
+                            <span class="badge bg-secondary">{{ house.room_count }}</span>
+                        </div>
+                        <div class="mt-2">
+                            <small class="text-muted">{{ house.size }}㎡ | {{ house.decoration }}</small>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{{ url_for('house.detail', id=house.id) }}" class="btn btn-sm btn-outline-primary w-100">查看详情</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if houses.has_prev or houses.has_next %}
+        <nav>
+            <ul class="pagination justify-content-center">
+                {% if houses.has_prev %}
+                <li class="page-item"><a class="page-link" href="{{ url_for('search.search', page=houses.prev_num, keyword=keyword, district=district, room_count=room_count, min_price=min_price, max_price=max_price, sort_by=sort_by) }}">上一页</a></li>
+                {% endif %}
+                <li class="page-item disabled"><span class="page-link">第 {{ houses.page }} / {{ houses.pages }} 页</span></li>
+                {% if houses.has_next %}
+                <li class="page-item"><a class="page-link" href="{{ url_for('search.search', page=houses.next_num, keyword=keyword, district=district, room_count=room_count, min_price=min_price, max_price=max_price, sort_by=sort_by) }}">下一页</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+
+        {% else %}
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> 未找到符合条件的房源，请尝试调整搜索条件
+        </div>
+        {% endif %}
+    </div>
+</div>
 {% endblock %}

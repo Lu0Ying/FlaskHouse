@@ -1,5 +1,134 @@
 {% extends "base.html" %}
-{% block title %}Page{% endblock %}
+{% block title %}用户管理{% endblock %}
 {% block content %}
-<h1>Page Title</h1>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-people"></i> 用户管理</h2>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="btn-group" role="group">
+                    <a href="{{ url_for('monitor.users') }}" class="btn btn-outline-secondary {% if not request.args.get('role') %}active{% endif %}">
+                        全部用户
+                    </a>
+                    <a href="{{ url_for('monitor.users', role='landlord') }}" class="btn btn-outline-secondary {% if request.args.get('role') == 'landlord' %}active{% endif %}">
+                        房东
+                    </a>
+                    <a href="{{ url_for('monitor.users', role='tenant') }}" class="btn btn-outline-secondary {% if request.args.get('role') == 'tenant' %}active{% endif %}">
+                        租客
+                    </a>
+                    <a href="{{ url_for('monitor.users', role='admin') }}" class="btn btn-outline-secondary {% if request.args.get('role') == 'admin' %}active{% endif %}">
+                        管理员
+                    </a>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="btn-group float-right" role="group">
+                    <a href="{{ url_for('monitor.users', status='active') }}" class="btn btn-outline-secondary {% if request.args.get('status') == 'active' %}active{% endif %}">
+                        活跃
+                    </a>
+                    <a href="{{ url_for('monitor.users', status='inactive') }}" class="btn btn-outline-secondary {% if request.args.get('status') == 'inactive' %}active{% endif %}">
+                        禁用
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>用户名</th>
+                        <th>真实姓名</th>
+                        <th>邮箱</th>
+                        <th>手机号</th>
+                        <th>角色</th>
+                        <th>状态</th>
+                        <th>注册时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users.items %}
+                    <tr>
+                        <td>{{ user.id }}</td>
+                        <td>
+                            <a href="{{ url_for('user.view', id=user.id) }}">{{ user.username }}</a>
+                        </td>
+                        <td>{{ user.real_name or '-' }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>{{ user.phone or '-' }}</td>
+                        <td>
+                            {% if user.role == 'admin' %}
+                            <span class="badge bg-danger">管理员</span>
+                            {% elif user.role == 'landlord' %}
+                            <span class="badge bg-primary">房东</span>
+                            {% else %}
+                            <span class="badge bg-success">租客</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if user.status == 'active' %}
+                            <span class="badge bg-success">活跃</span>
+                            {% else %}
+                            <span class="badge bg-secondary">禁用</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ user.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{{ url_for('user.view', id=user.id) }}" class="btn btn-sm btn-outline-primary" title="查看详情">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                {% if user.id != current_user.id %}
+                                <form action="{{ url_for('monitor.toggle_user_status', id=user.id) }}" method="POST" class="d-inline">
+                                    <button type="submit" class="btn btn-sm {% if user.status == 'active' %}btn-outline-danger{% else %}btn-outline-success{% endif %}" 
+                                            title="{{ user.status == 'active' and '禁用' or '启用' }}">
+                                        <i class="bi {% if user.status == 'active' %}bi-x-circle{% else %}bi-check-circle{% endif %}"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="9" class="text-center text-muted">暂无用户记录</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if users.pages > 1 %}
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if users.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('monitor.users', page=users.prev_num, role=request.args.get('role'), status=request.args.get('status')) }}">上一页</a>
+                </li>
+                {% endif %}
+                {% for page in users.iter_pages() %}
+                {% if page %}
+                <li class="page-item {% if page == users.page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('monitor.users', page=page, role=request.args.get('role'), status=request.args.get('status')) }}">{{ page }}</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+                {% endfor %}
+                {% if users.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('monitor.users', page=users.next_num, role=request.args.get('role'), status=request.args.get('status')) }}">下一页</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
 {% endblock %}

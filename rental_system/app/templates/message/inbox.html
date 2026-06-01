@@ -1,5 +1,87 @@
 {% extends "base.html" %}
-{% block title %}Page{% endblock %}
+{% block title %}消息中心{% endblock %}
 {% block content %}
-<h1>Page Title</h1>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-envelope"></i> 消息中心</h2>
+    <div class="btn-group" role="group">
+        <a href="{{ url_for('message.inbox') }}" class="btn btn-primary">收件箱</a>
+        <a href="{{ url_for('message.sent') }}" class="btn btn-outline-secondary">已发送</a>
+        <a href="{{ url_for('message.send') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-pencil"></i> 发送消息
+        </a>
+    </div>
+</div>
+
+{% if unread_count > 0 %}
+<div class="alert alert-info mb-4">
+    <i class="bi bi-info-circle"></i> 您有 {{ unread_count }} 条未读消息
+    <form action="{{ url_for('message.mark_all_read') }}" method="POST" class="d-inline float-right">
+        <button type="submit" class="btn btn-sm btn-outline-primary">全部标为已读</button>
+    </form>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-body">
+        {% if messages.items %}
+        <div class="list-group">
+            {% for message in messages.items %}
+            <a href="{{ url_for('message.view', id=message.id) }}" 
+               class="list-group-item list-group-item-action {% if not message.read_status %}active{% endif %}">
+                <div class="d-flex justify-content-between">
+                    <div class="d-flex align-items-center">
+                        <div class="mr-3">
+                            <i class="bi bi-person-circle text-primary" style="font-size: 2rem;"></i>
+                        </div>
+                        <div>
+                            <h6 class="font-weight-bold">
+                                {{ message.sender.username }}
+                                {% if message.read_status == false %}
+                                <span class="badge bg-primary ml-2">未读</span>
+                                {% endif %}
+                            </h6>
+                            <p class="text-muted small">{{ message.content[:50] }}{% if message.content|length > 50 %}...{% endif %}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-muted small">{{ message.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        
+        {% if messages.pages > 1 %}
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if messages.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('message.inbox', page=messages.prev_num) }}">上一页</a>
+                </li>
+                {% endif %}
+                {% for page in messages.iter_pages() %}
+                {% if page %}
+                <li class="page-item {% if page == messages.page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('message.inbox', page=page) }}">{{ page }}</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+                {% endfor %}
+                {% if messages.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('message.inbox', page=messages.next_num) }}">下一页</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        {% else %}
+        <div class="text-center py-8">
+            <i class="bi bi-inbox" style="font-size: 4rem; color: #ccc;"></i>
+            <p class="text-muted mt-4">暂无消息</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
 {% endblock %}

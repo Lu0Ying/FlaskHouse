@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}所有投诉{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-flag"></i> 所有投诉</h2>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <div class="btn-group" role="group">
+            <a href="{{ url_for('complaint.all_complaints') }}" class="btn btn-outline-secondary {% if not request.args.get('status') %}active{% endif %}">
+                全部
+            </a>
+            <a href="{{ url_for('complaint.all_complaints', status='pending') }}" class="btn btn-outline-secondary {% if request.args.get('status') == 'pending' %}active{% endif %}">
+                待处理
+            </a>
+            <a href="{{ url_for('complaint.all_complaints', status='processing') }}" class="btn btn-outline-secondary {% if request.args.get('status') == 'processing' %}active{% endif %}">
+                处理中
+            </a>
+            <a href="{{ url_for('complaint.all_complaints', status='resolved') }}" class="btn btn-outline-secondary {% if request.args.get('status') == 'resolved' %}active{% endif %}">
+                已解决
+            </a>
+            <a href="{{ url_for('complaint.all_complaints', status='rejected') }}" class="btn btn-outline-secondary {% if request.args.get('status') == 'rejected' %}active{% endif %}">
+                已驳回
+            </a>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>房源信息</th>
+                        <th>投诉人</th>
+                        <th>投诉类型</th>
+                        <th>内容摘要</th>
+                        <th>状态</th>
+                        <th>提交时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for complaint in complaints.items %}
+                    <tr>
+                        <td>#{{ complaint.id }}</td>
+                        <td>
+                            <a href="{{ url_for('house.detail', id=complaint.house_id) }}">{{ complaint.house.title }}</a>
+                            <p class="text-muted small">{{ complaint.house.address }}</p>
+                        </td>
+                        <td>
+                            {{ complaint.tenant.username }}
+                            {% if complaint.tenant.phone %}
+                            <p class="text-muted small">{{ complaint.tenant.phone }}</p>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if complaint.target_type == 'landlord' %}
+                            <span class="badge bg-danger">房东问题</span>
+                            {% elif complaint.target_type == 'property' %}
+                            <span class="badge bg-warning">房屋问题</span>
+                            {% elif complaint.target_type == 'neighbor' %}
+                            <span class="badge bg-info">邻里纠纷</span>
+                            {% else %}
+                            <span class="badge bg-secondary">其他</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ complaint.content[:50] }}{% if complaint.content|length > 50 %}...{% endif %}</td>
+                        <td>
+                            {% if complaint.status == 'pending' %}
+                            <span class="badge bg-warning">待处理</span>
+                            {% elif complaint.status == 'processing' %}
+                            <span class="badge bg-info">处理中</span>
+                            {% elif complaint.status == 'resolved' %}
+                            <span class="badge bg-success">已解决</span>
+                            {% elif complaint.status == 'rejected' %}
+                            <span class="badge bg-danger">已驳回</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ complaint.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ complaint.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{{ url_for('complaint.detail', id=complaint.id) }}" class="btn btn-sm btn-outline-primary" title="查看详情">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                {% if complaint.status in ['pending', 'processing'] %}
+                                <a href="{{ url_for('complaint.process', id=complaint.id) }}" class="btn btn-sm btn-outline-success" title="处理投诉">
+                                    <i class="bi bi-check-circle"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center text-muted">暂无投诉记录</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if complaints.pages > 1 %}
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if complaints.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('complaint.all_complaints', page=complaints.prev_num, status=request.args.get('status')) }}">上一页</a>
+                </li>
+                {% endif %}
+                {% for page in complaints.iter_pages() %}
+                {% if page %}
+                <li class="page-item {% if page == complaints.page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('complaint.all_complaints', page=page, status=request.args.get('status')) }}">{{ page }}</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+                {% endfor %}
+                {% if complaints.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('complaint.all_complaints', page=complaints.next_num, status=request.args.get('status')) }}">下一页</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

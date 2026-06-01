@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}控制台 - 管理员{% endblock %}
+{% block content %}
+<h2 class="mb-4"><i class="bi bi-speedometer2"></i> 管理员控制台</h2>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h5 class="card-title">房源总数</h5>
+                <h2>{{ total_houses }}</h2>
+                <small>可租: {{ available_houses }} | 已租: {{ rented_houses }} | 维护: {{ maintenance_houses }}</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h5 class="card-title">用户总数</h5>
+                <h2>{{ total_users }}</h2>
+                <small>房东: {{ total_landlords }} | 租客: {{ total_tenants }} | 活跃: {{ active_users }}</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <h5 class="card-title">合同数量</h5>
+                <h2>{{ total_contracts }}</h2>
+                <small>活跃: {{ active_contracts }}</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <h5 class="card-title">总收入</h5>
+                <h2>¥{{ total_revenue|round(2) }}</h2>
+                <small>本月: ¥{{ monthly_revenue|round(2) }} | 逾期: {{ overdue_payments }}</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-clock-history"></i> 最近活动</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    {% for activity in recent_activities %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <strong>{{ activity.user.username }}</strong> {{ activity.action_type }}
+                                {% if activity.details %}
+                                <span class="text-muted small">- {{ activity.details }}</span>
+                                {% endif %}
+                            </div>
+                            <span class="text-muted small">{{ activity.timestamp.strftime('%Y-%m-%d %H:%M') }}</span>
+                        </div>
+                    </div>
+                    {% else %}
+                    <p class="text-center text-muted">暂无活动记录</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-tools"></i> 快捷操作</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('monitor.users') }}" class="btn btn-outline-primary">
+                        <i class="bi bi-people"></i> 用户管理
+                    </a>
+                    <a href="{{ url_for('repair.all_repairs') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-wrench"></i> 所有维修
+                    </a>
+                    <a href="{{ url_for('complaint.all_complaints') }}" class="btn btn-outline-warning">
+                        <i class="bi bi-flag"></i> 所有投诉
+                    </a>
+                    <a href="{{ url_for('monitor.system_logs') }}" class="btn btn-outline-info">
+                        <i class="bi bi-clock-history"></i> 系统日志
+                    </a>
+                    <a href="{{ url_for('stats.house_stats') }}" class="btn btn-outline-success">
+                        <i class="bi bi-bar-chart"></i> 统计报表
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

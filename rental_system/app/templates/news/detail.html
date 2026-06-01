@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}{{ news.title }}{% endblock %}
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        <h1>{{ news.title }}</h1>
+        <div class="text-muted mb-4">
+            <small>
+                <i class="bi bi-calendar"></i> 
+                {% if news.published_at %}
+                    {{ news.published_at.strftime('%Y-%m-%d %H:%M') }}
+                {% else %}
+                    {{ news.created_at.strftime('%Y-%m-%d %H:%M') if news.created_at else '未知' }}
+                {% endif %}
+                <span class="mx-2">|</span>
+                <i class="bi bi-tag"></i> 
+                {% if news.category == 'rental' %}租赁资讯{% elif news.category == 'repair' %}维修指南{% else %}系统公告{% endif %}
+            </small>
+        </div>
+        <div class="content">
+            {{ news.content|safe }}
+        </div>
+    </div>
+</div>
+
+<div class="mt-4">
+    <a href="{{ url_for('news.index') }}" class="btn btn-outline-primary">
+        <i class="bi bi-arrow-left"></i> 返回列表
+    </a>
+</div>
+{% endblock %}

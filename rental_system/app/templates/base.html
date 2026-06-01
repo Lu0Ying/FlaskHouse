@@ -2,24 +2,217 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}智能房屋租赁系统{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Microsoft YaHei', Arial, sans-serif; }
+        .navbar-brand { font-weight: bold; }
+        .sidebar { min-height: calc(100vh - 56px); background: #f8f9fa; }
+        .nav-link.active { background-color: #e9ecef; }
+        .nav-link { color: #333; }
+        .nav-link:hover { color: #0d6efd; }
+        .house-card { transition: transform 0.2s; }
+        .house-card:hover { transform: translateY(-5px); }
+        .status-badge { font-size: 0.85rem; }
+    </style>
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
-            <a class="navbar-brand" href="{{ url_for('house.index') }}">房屋租赁系统</a>
+            <a class="navbar-brand" href="{{ url_for('house.index') }}">
+                <i class="bi bi-house-door"></i> 房屋租赁系统
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('house.index') }}">房源列表</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('search.index') }}">智能搜索</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('news.index') }}">新闻资讯</a>
+                    </li>
+                    {% if current_user.is_authenticated %}
+                        {% if current_user.is_landlord() %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('house.create') }}">发布房源</a>
+                        </li>
+                        {% endif %}
+                        {% if current_user.is_tenant() %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('lease.my_appointments') }}">我的预约</a>
+                        </li>
+                        {% endif %}
+                    {% endif %}
+                </ul>
+                <ul class="navbar-nav">
+                    {% if current_user.is_authenticated %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                                <i class="bi bi-person-circle"></i> {{ current_user.username }}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="{{ url_for('user.profile') }}">个人中心</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('user.dashboard') }}">控制台</a></li>
+                                {% if current_user.is_landlord() %}
+                                <li><a class="dropdown-item" href="{{ url_for('user.my_houses') }}">我的房源</a></li>
+                                {% endif %}
+                                <li><a class="dropdown-item" href="{{ url_for('message.inbox') }}">我的消息</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                {% if current_user.is_admin() %}
+                                <li><a class="dropdown-item" href="{{ url_for('monitor.index') }}">系统监控</a></li>
+                                {% endif %}
+                                <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">退出登录</a></li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('auth.login') }}">登录</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('auth.register') }}">注册</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
         </div>
     </nav>
-    <div class="container mt-4">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-        {% block content %}{% endblock %}
+
+    <div class="container-fluid mt-4">
+        <div class="row">
+            {% if current_user.is_authenticated and (current_user.is_landlord() or current_user.is_admin()) %}
+            <div class="col-md-2 sidebar py-3">
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'user.dashboard' or request.endpoint == 'stats.landlord_dashboard' or request.endpoint == 'stats.admin_dashboard' %}active{% endif %}"
+                           href="{{ url_for('user.dashboard') }}">
+                            <i class="bi bi-speedometer2"></i> 控制台
+                        </a>
+                    </li>
+                    {% if current_user.is_landlord() %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'user.my_houses' %}active{% endif %}"
+                           href="{{ url_for('user.my_houses') }}">
+                            <i class="bi bi-house"></i> 我的房源
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'lease.landlord_appointments' %}active{% endif %}"
+                           href="{{ url_for('lease.landlord_appointments') }}">
+                            <i class="bi bi-calendar-check"></i> 看房预约
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'news.my_news' %}active{% endif %}"
+                           href="{{ url_for('news.my_news') }}">
+                            <i class="bi bi-newspaper"></i> 新闻管理
+                        </a>
+                    </li>
+                    {% endif %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'lease.contracts' %}active{% endif %}"
+                           href="{{ url_for('lease.contracts') }}">
+                            <i class="bi bi-file-text"></i> 租赁合同
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'lease.payments' %}active{% endif %}"
+                           href="{{ url_for('lease.payments') }}">
+                            <i class="bi bi-currency-dollar"></i> 租金管理
+                        </a>
+                    </li>
+                    {% if current_user.is_landlord() %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'repair.landlord_repairs' %}active{% endif %}"
+                           href="{{ url_for('repair.landlord_repairs') }}">
+                            <i class="bi bi-tools"></i> 维修处理
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'complaint.landlord_complaints' %}active{% endif %}"
+                           href="{{ url_for('complaint.landlord_complaints') }}">
+                            <i class="bi bi-exclamation-triangle"></i> 投诉处理
+                        </a>
+                    </li>
+                    {% endif %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'message.inbox' %}active{% endif %}"
+                           href="{{ url_for('message.inbox') }}">
+                            <i class="bi bi-envelope"></i> 消息中心
+                        </a>
+                    </li>
+                    {% if current_user.is_admin() %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'monitor.users' %}active{% endif %}"
+                           href="{{ url_for('monitor.users') }}">
+                            <i class="bi bi-people"></i> 用户管理
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'repair.all_repairs' %}active{% endif %}"
+                           href="{{ url_for('repair.all_repairs') }}">
+                            <i class="bi bi-wrench"></i> 所有维修
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'complaint.all_complaints' %}active{% endif %}"
+                           href="{{ url_for('complaint.all_complaints') }}">
+                            <i class="bi bi-flag"></i> 所有投诉
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if current_user.is_landlord() or current_user.is_admin() %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint in ['stats.house_stats', 'stats.revenue_stats'] %}active{% endif %}"
+                           href="{{ url_for('stats.house_stats') }}">
+                            <i class="bi bi-bar-chart"></i> 统计报表
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if current_user.is_admin() %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'monitor.system_logs' %}active{% endif %}"
+                           href="{{ url_for('monitor.system_logs') }}">
+                            <i class="bi bi-clock-history"></i> 系统日志
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+            <div class="col-md-10">
+                {% else %}
+                <div class="col-md-12">
+                {% endif %}
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    {% block content %}{% endblock %}
+                </div>
+            </div>
+        </div>
     </div>
+
+    <footer class="bg-light py-4 mt-5">
+        <div class="container text-center">
+            <p class="text-muted mb-0">智能房屋租赁系统 &copy; 2024</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

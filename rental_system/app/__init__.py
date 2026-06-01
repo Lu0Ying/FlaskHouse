@@ -61,7 +61,13 @@ def create_app(config_class=Config):
     
     from app.regions import bp as regions_bp
     app.register_blueprint(regions_bp, url_prefix='/api/regions')
-    
+
+    from app.news import bp as news_bp
+    app.register_blueprint(news_bp, url_prefix='/news')
+
+    from app.complaint import bp as complaint_bp
+    app.register_blueprint(complaint_bp, url_prefix='/complaint')
+
     # 注册错误处理
     register_error_handlers(app)
 

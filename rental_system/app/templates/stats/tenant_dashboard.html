@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}控制台 - 租户{% endblock %}
+{% block content %}
+<h2 class="mb-4"><i class="bi bi-speedometer2"></i> 租户控制台</h2>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h5 class="card-title">租住合同</h5>
+                <h2>{{ active_contracts }}</h2>
+                <small>当前生效中</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <h5 class="card-title">待付账单</h5>
+                <h2>{{ upcoming_payments|length }}</h2>
+                <small>即将到期</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <h5 class="card-title">维修申请</h5>
+                <h2>{{ my_repairs }}</h2>
+                <small>处理中</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h5 class="card-title">我的消息</h5>
+                <h2>{{ unread_count|default(0) }}</h2>
+                <small>未读消息</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-house"></i> 我的租住</h5>
+            </div>
+            <div class="card-body">
+                {% if my_rentals %}
+                <div class="list-group">
+                    {% for rental in my_rentals %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6>{{ rental.house.title }}</h6>
+                                <p class="text-muted small">{{ rental.house.address }}</p>
+                                <span class="badge bg-primary">{{ rental.contract.start_date }} - {{ rental.contract.end_date }}</span>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-lg">¥{{ rental.contract.rent_amount }}/月</p>
+                                <a href="{{ url_for('house.detail', id=rental.house.id) }}" class="btn btn-sm btn-outline-secondary">查看</a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-center text-muted">暂无租住房源</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-calendar"></i> 待付账单</h5>
+            </div>
+            <div class="card-body">
+                {% if upcoming_payments %}
+                <div class="list-group">
+                    {% for payment in upcoming_payments %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <p class="mb-1">账单 #{{ payment.id }}</p>
+                                <p class="text-muted small">截止日期: {{ payment.due_date }}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-lg font-weight-bold">¥{{ payment.amount }}</p>
+                                <form action="{{ url_for('lease.pay_rent', id=payment.id) }}" method="POST" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-success">立即支付</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-center text-muted">暂无待付账单</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-link-45deg"></i> 快捷操作</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <a href="{{ url_for('repair.create') }}" class="btn btn-outline-primary w-100">
+                            <i class="bi bi-wrench"></i> 提交维修申请
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{{ url_for('complaint.create') }}" class="btn btn-outline-warning w-100">
+                            <i class="bi bi-flag"></i> 提交投诉
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{{ url_for('message.inbox') }}" class="btn btn-outline-info w-100">
+                            <i class="bi bi-envelope"></i> 消息中心
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{{ url_for('lease.contracts') }}" class="btn btn-outline-success w-100">
+                            <i class="bi bi-file-text"></i> 我的合同
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}统计报表 - 房源统计{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-bar-chart"></i> 房源统计</h2>
+    <div class="btn-group" role="group">
+        <a href="{{ url_for('stats.house_stats') }}" class="btn btn-primary">房源统计</a>
+        <a href="{{ url_for('stats.revenue_stats') }}" class="btn btn-outline-secondary">收入统计</a>
+        {% if current_user.is_admin() %}
+        <a href="{{ url_for('stats.user_stats') }}" class="btn btn-outline-secondary">用户统计</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">房源列表及入住率</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>房源名称</th>
+                        <th>地址</th>
+                        <th>状态</th>
+                        <th>合同数</th>
+                        <th>入住率</th>
+                        <th>当前租客</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in house_data %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('house.detail', id=item.house.id) }}">{{ item.house.title }}</a>
+                        </td>
+                        <td>{{ item.house.address }}</td>
+                        <td>
+                            {% if item.house.status == 'available' %}
+                            <span class="badge bg-success">可出租</span>
+                            {% elif item.house.status == 'rented' %}
+                            <span class="badge bg-primary">已出租</span>
+                            {% else %}
+                            <span class="badge bg-warning">维护中</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ item.total_contracts }}</td>
+                        <td>
+                            <div class="progress" style="width: 150px;">
+                                <div class="progress-bar {% if item.occupancy_rate >= 80 %}bg-success{% elif item.occupancy_rate >= 50 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                     role="progressbar" 
+                                     style="width: {{ item.occupancy_rate }}%">
+                                    {{ item.occupancy_rate|round(1) }}%
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            {% if item.active_contract %}
+                            {{ item.active_contract.tenant.username }}
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('house.detail', id=item.house.id) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i> 查看
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted">暂无房源数据</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block title %}租金管理{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-currency-dollar"></i> 租金管理</h2>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="btn-group" role="group">
+                    <a href="{{ url_for('lease.payments') }}" class="btn btn-outline-secondary {% if not request.args.get('status') %}active{% endif %}">
+                        全部
+                    </a>
+                    <a href="{{ url_for('lease.payments', status='unpaid') }}" class="btn btn-outline-secondary {% if request.args.get('status') == 'unpaid' %}active{% endif %}">
+                        待支付
+                    </a>
+                    <a href="{{ url_for('lease.payments', status='paid') }}" class="btn btn-outline-secondary {% if request.args.get('status') == 'paid' %}active{% endif %}">
+                        已支付
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>账单编号</th>
+                        <th>房源信息</th>
+                        <th>租客</th>
+                        <th>金额</th>
+                        <th>到期日期</th>
+                        <th>支付状态</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payment in payments.items %}
+                    <tr>
+                        <td>#{{ payment.id }}</td>
+                        <td>
+                            <a href="{{ url_for('house.detail', id=payment.contract.house_id) }}">
+                                {{ payment.contract.house.title }}
+                            </a>
+                            <p class="text-muted small">{{ payment.contract.house.address }}</p>
+                        </td>
+                        <td>
+                            {{ payment.contract.tenant.username }}
+                            {% if payment.contract.tenant.phone %}
+                            <p class="text-muted small">{{ payment.contract.tenant.phone }}</p>
+                            {% endif %}
+                        </td>
+                        <td>¥{{ payment.amount }}</td>
+                        <td>
+                            {{ payment.due_date.strftime('%Y-%m-%d') }}
+                            {% if payment.status == 'unpaid' and payment.due_date < datetime.now().date() %}
+                            <span class="badge bg-danger ml-2">已逾期</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if payment.status == 'paid' %}
+                            <span class="badge bg-success">已支付</span>
+                            {% if payment.paid_date %}
+                            <p class="text-muted small">支付于 {{ payment.paid_date.strftime('%Y-%m-%d') }}</p>
+                            {% endif %}
+                            {% elif payment.status == 'unpaid' %}
+                            <span class="badge bg-warning">待支付</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ payment.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                {% if payment.status == 'unpaid' and current_user.is_tenant() and current_user.id == payment.contract.tenant_id %}
+                                <form action="{{ url_for('lease.pay_rent', id=payment.id) }}" method="POST" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-success" title="支付租金">
+                                        <i class="bi bi-credit-card"></i> 支付
+                                    </button>
+                                </form>
+                                {% endif %}
+                                {% if payment.status == 'unpaid' and current_user.is_landlord() %}
+                                <form action="{{ url_for('lease.remind_rent', id=payment.id) }}" method="POST" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-warning" title="发送提醒">
+                                        <i class="bi bi-bell"></i> 提醒
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted">暂无租金账单</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if payments.pages > 1 %}
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if payments.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('lease.payments', page=payments.prev_num, status=request.args.get('status')) }}">上一页</a>
+                </li>
+                {% endif %}
+                {% for page in payments.iter_pages() %}
+                {% if page %}
+                <li class="page-item {% if page == payments.page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('lease.payments', page=page, status=request.args.get('status')) }}">{{ page }}</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+                {% endfor %}
+                {% if payments.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('lease.payments', page=payments.next_num, status=request.args.get('status')) }}">下一页</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+    var datetime = new Date();
+</script>
+{% endblock %}

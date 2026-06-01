@@ -4,6 +4,7 @@ from werkzeug.security import check_password_hash
 from app import db
 from app.auth import bp
 from app.models import *
+from app.forms import LoginForm, RegistrationForm
 
 @bp.route('/')
 def index():
@@ -13,6 +14,8 @@ def index():
 def login():
     if current_user.is_authenticated:
         return redirect(url_for('house.index'))
+    
+    form = LoginForm()
     
     if request.method == 'POST':
         email = request.form.get('email')
@@ -24,7 +27,7 @@ def login():
         if user and user.check_password(password):
             if user.status != 'active':
                 flash('账户已被禁用', 'danger')
-                return render_template('auth/login.html')
+                return render_template('auth/login.html', form=form)
             
             login_user(user, remember=remember)
             next_page = request.args.get('next')
@@ -32,12 +35,14 @@ def login():
         else:
             flash('邮箱或密码错误', 'danger')
     
-    return render_template('auth/login.html')
+    return render_template('auth/login.html', form=form)
 
 @bp.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
         return redirect(url_for('house.index'))
+    
+    form = RegistrationForm()
     
     if request.method == 'POST':
         username = request.form.get('username')
@@ -47,11 +52,11 @@ def register():
         
         if User.query.filter_by(username=username).first():
             flash('用户名已存在', 'danger')
-            return render_template('auth/register.html')
+            return render_template('auth/register.html', form=form)
         
         if User.query.filter_by(email=email).first():
             flash('邮箱已被注册', 'danger')
-            return render_template('auth/register.html')
+            return render_template('auth/register.html', form=form)
         
         user = User(
             username=username,
@@ -66,7 +71,7 @@ def register():
         flash('注册成功，请登录', 'success')
         return redirect(url_for('auth.login'))
     
-    return render_template('auth/register.html')
+    return render_template('auth/register.html', form=form)
 
 @bp.route('/logout')
 @login_required

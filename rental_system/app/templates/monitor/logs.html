@@ -1,5 +1,135 @@
 {% extends "base.html" %}
-{% block title %}Page{% endblock %}
+{% block title %}系统日志{% endblock %}
 {% block content %}
-<h1>Page Title</h1>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-clock-history"></i> 系统日志</h2>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <form method="GET" action="{{ url_for('monitor.system_logs') }}" class="form-inline">
+            <div class="form-group mr-3">
+                <label for="action" class="mr-2">操作类型:</label>
+                <input type="text" name="action" id="action" class="form-control" 
+                       placeholder="搜索操作..." value="{{ request.args.get('action', '') }}">
+            </div>
+            <div class="form-group mr-3">
+                <label for="start_date" class="mr-2">开始日期:</label>
+                <input type="date" name="start_date" id="start_date" class="form-control" 
+                       value="{{ request.args.get('start_date', '') }}">
+            </div>
+            <div class="form-group mr-3">
+                <label for="end_date" class="mr-2">结束日期:</label>
+                <input type="date" name="end_date" id="end_date" class="form-control" 
+                       value="{{ request.args.get('end_date', '') }}">
+            </div>
+            <button type="submit" class="btn btn-primary">搜索</button>
+        </form>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover">
+                <thead>
+                    <tr>
+                        <th>时间</th>
+                        <th>操作</th>
+                        <th>用户</th>
+                        <th>IP地址</th>
+                        <th>详情</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs.items %}
+                    <tr>
+                        <td>{{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td>
+                            {% if '登录' in log.action %}
+                            <span class="badge bg-success">{{ log.action }}</span>
+                            {% elif '创建' in log.action %}
+                            <span class="badge bg-primary">{{ log.action }}</span>
+                            {% elif '更新' in log.action %}
+                            <span class="badge bg-info">{{ log.action }}</span>
+                            {% elif '删除' in log.action %}
+                            <span class="badge bg-danger">{{ log.action }}</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ log.action }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ log.user.username if log.user else '系统' }}</td>
+                        <td>{{ log.ip or '-' }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-secondary" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#detailModal{{ log.id }}">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            <!-- Modal -->
+                            <div class="modal fade" id="detailModal{{ log.id }}" tabindex="-1">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">日志详情</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <p><strong>操作:</strong> {{ log.action }}</p>
+                                            <p><strong>时间:</strong> {{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                                            <p><strong>用户:</strong> {{ log.user.username if log.user else '系统' }}</p>
+                                            <p><strong>IP:</strong> {{ log.ip or '-' }}</p>
+                                            <p><strong>详情:</strong></p>
+                                            <pre class="bg-light p-2">{{ log.details or '无' }}</pre>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">暂无日志记录</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if logs.pages > 1 %}
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if logs.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('monitor.system_logs', page=logs.prev_num, 
+                        action=request.args.get('action'), 
+                        start_date=request.args.get('start_date'), 
+                        end_date=request.args.get('end_date')) }}">上一页</a>
+                </li>
+                {% endif %}
+                {% for page in logs.iter_pages() %}
+                {% if page %}
+                <li class="page-item {% if page == logs.page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('monitor.system_logs', page=page, 
+                        action=request.args.get('action'), 
+                        start_date=request.args.get('start_date'), 
+                        end_date=request.args.get('end_date')) }}">{{ page }}</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+                {% endfor %}
+                {% if logs.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('monitor.system_logs', page=logs.next_num, 
+                        action=request.args.get('action'), 
+                        start_date=request.args.get('start_date'), 
+                        end_date=request.args.get('end_date')) }}">下一页</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
 {% endblock %}

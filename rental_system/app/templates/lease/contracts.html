@@ -1,5 +1,143 @@
 {% extends "base.html" %}
-{% block title %}Page{% endblock %}
+{% block title %}租赁合同{% endblock %}
 {% block content %}
-<h1>Page Title</h1>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-file-text"></i> 租赁合同</h2>
+    {% if current_user.is_admin() %}
+    <a href="{{ url_for('house.index') }}" class="btn btn-primary">
+        <i class="bi bi-plus"></i> 创建合同
+    </a>
+    {% endif %}
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="btn-group" role="group">
+                    <a href="{{ url_for('lease.contracts') }}" class="btn btn-outline-secondary {% if not request.args.get('status') %}active{% endif %}">
+                        全部
+                    </a>
+                    <a href="{{ url_for('lease.contracts', status='active') }}" class="btn btn-outline-secondary {% if request.args.get('status') == 'active' %}active{% endif %}">
+                        生效中
+                    </a>
+                    <a href="{{ url_for('lease.contracts', status='pending') }}" class="btn btn-outline-secondary {% if request.args.get('status') == 'pending' %}active{% endif %}">
+                        待签署
+                    </a>
+                    <a href="{{ url_for('lease.contracts', status='terminated') }}" class="btn btn-outline-secondary {% if request.args.get('status') == 'terminated' %}active{% endif %}">
+                        已终止
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>合同编号</th>
+                        <th>房源信息</th>
+                        <th>租客</th>
+                        <th>租期</th>
+                        <th>租金</th>
+                        <th>状态</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for contract in contracts.items %}
+                    <tr>
+                        <td>#{{ contract.id }}</td>
+                        <td>
+                            <a href="{{ url_for('house.detail', id=contract.house_id) }}">
+                                {{ contract.house.title }}
+                            </a>
+                            <p class="text-muted small">{{ contract.house.address }}</p>
+                        </td>
+                        <td>
+                            {{ contract.tenant.username }}
+                            {% if contract.tenant.phone %}
+                            <p class="text-muted small">{{ contract.tenant.phone }}</p>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {{ contract.start_date.strftime('%Y-%m-%d') }}
+                            <br>
+                            <span class="text-muted small">至 {{ contract.end_date.strftime('%Y-%m-%d') }}</span>
+                        </td>
+                        <td>
+                            ¥{{ contract.rent_amount }}/{{ contract.payment_method == 'monthly' and '月' or contract.payment_method == 'quarterly' and '季' or '年' }}
+                            <br>
+                            <span class="text-muted small">押金: ¥{{ contract.deposit_amount }}</span>
+                        </td>
+                        <td>
+                            {% if contract.status == 'active' %}
+                            <span class="badge bg-success">生效中</span>
+                            {% elif contract.status == 'pending' %}
+                            <span class="badge bg-warning">待签署</span>
+                            {% elif contract.status == 'terminated' %}
+                            <span class="badge bg-danger">已终止</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ contract.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{{ url_for('lease.view_contract', id=contract.id) }}" class="btn btn-sm btn-outline-primary" title="查看详情">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                {% if contract.status == 'pending' and current_user.id in [contract.tenant_id, contract.landlord_id] %}
+                                <form action="{{ url_for('lease.sign_contract', id=contract.id) }}" method="POST" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-success" title="签署合同">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                                {% if contract.status == 'active' and current_user.is_admin() %}
+                                <form action="{{ url_for('lease.terminate_contract', id=contract.id) }}" method="POST" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="终止合同" onclick="return confirm('确定终止此合同？')">
+                                        <i class="bi bi-x-circle"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted">暂无合同记录</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if contracts.pages > 1 %}
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if contracts.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('lease.contracts', page=contracts.prev_num, status=request.args.get('status')) }}">上一页</a>
+                </li>
+                {% endif %}
+                {% for page in contracts.iter_pages() %}
+                {% if page %}
+                <li class="page-item {% if page == contracts.page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('lease.contracts', page=page, status=request.args.get('status')) }}">{{ page }}</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+                {% endfor %}
+                {% if contracts.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('lease.contracts', page=contracts.next_num, status=request.args.get('status')) }}">下一页</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
 {% endblock %}

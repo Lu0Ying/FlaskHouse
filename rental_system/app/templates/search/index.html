@@ -1,20 +1,22 @@
 {% extends "base.html" %}
-
+{% block title %}智能搜索房源{% endblock %}
 {% block content %}
+<h2 class="mb-4"><i class="bi bi-search"></i> 智能搜索房源</h2>
+
 <div class="row">
     <!-- 搜索表单 -->
-    <div class="col-md-4">
-        <div class="card mb-4">
+    <div class="col-md-3">
+        <div class="card mb-3">
             <div class="card-header">
-                <h3><i class="fas fa-search"></i> 搜索房源</h3>
+                <h5 class="mb-0">筛选条件</h5>
             </div>
             <div class="card-body">
                 <form method="GET" action="{{ url_for('search.index') }}">
                     <div class="mb-3">
                         <label class="form-label">关键词</label>
                         <input type="text" name="keyword" class="form-control" 
-                               placeholder="输入标题、地址等关键词"
-                               value="{{ request.args.get('keyword', '') }}">
+                               placeholder="小区/地址/标题"
+                               value="{{ keyword }}">
                     </div>
                     
                     <div class="mb-3">
@@ -39,250 +41,237 @@
                         <div class="form-text">请先选择省份，然后选择城市，最后选择区县</div>
                     </div>
 
-                    <script>
-                    let regionsData = {
-                        provinces: {},
-                        cities: {},
-                        districts: {}
-                    };
-
-                    async function loadProvinces() {
-                        try {
-                            const response = await fetch('/api/regions/provinces');
-                            const data = await response.json();
-                            const select = document.getElementById('provinceSelect');
-                            select.innerHTML = '<option value="">选择省份</option>';
-                            data.forEach(p => {
-                                select.innerHTML += `<option value="${p.code}">${p.name}</option>`;
-                                regionsData.provinces[p.code] = p;
-                            });
-                        } catch (error) {
-                            console.error('加载省份失败:', error);
-                        }
-                    }
-
-                    async function loadCities(provinceCode) {
-                        const citySelect = document.getElementById('citySelect');
-                        const districtSelect = document.getElementById('districtSelect');
-
-                        if (!provinceCode) {
-                            citySelect.innerHTML = '<option value="">选择城市</option>';
-                            citySelect.disabled = true;
-                            districtSelect.innerHTML = '<option value="">选择区县</option>';
-                            districtSelect.disabled = true;
-                            return;
-                        }
-
-                        try {
-                            const response = await fetch(`/api/regions/${provinceCode}/cities`);
-                            const data = await response.json();
-                            citySelect.innerHTML = '<option value="">选择城市</option>';
-                            data.forEach(c => {
-                                citySelect.innerHTML += `<option value="${c.code}">${c.name}</option>`;
-                                regionsData.cities[c.code] = c;
-                            });
-                            citySelect.disabled = false;
-                            districtSelect.innerHTML = '<option value="">选择区县</option>';
-                            districtSelect.disabled = true;
-                        } catch (error) {
-                            console.error('加载城市失败:', error);
-                        }
-                    }
-
-                    async function loadDistricts(cityCode) {
-                        const districtSelect = document.getElementById('districtSelect');
-
-                        if (!cityCode) {
-                            districtSelect.innerHTML = '<option value="">选择区县</option>';
-                            districtSelect.disabled = true;
-                            return;
-                        }
-
-                        try {
-                            const response = await fetch(`/api/regions/${cityCode}/districts`);
-                            const data = await response.json();
-                            districtSelect.innerHTML = '<option value="">选择区县</option>';
-                            data.forEach(d => {
-                                districtSelect.innerHTML += `<option value="${d.code}">${d.name}</option>`;
-                                regionsData.districts[d.code] = d;
-                            });
-                            districtSelect.disabled = false;
-                        } catch (error) {
-                            console.error('加载区县失败:', error);
-                        }
-                    }
-
-                    document.addEventListener('DOMContentLoaded', function() {
-                        loadProvinces();
-                    });
-                    </script>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">房屋类型</label>
-                        <select name="house_type" class="form-select">
-                            <option value="">全部类型</option>
-                            <option value="公寓" {% if request.args.get('house_type') == '公寓' %}selected{% endif %}>公寓</option>
-                            <option value="住宅" {% if request.args.get('house_type') == '住宅' %}selected{% endif %}>住宅</option>
-                            <option value="别墅" {% if request.args.get('house_type') == '别墅' %}selected{% endif %}>别墅</option>
-                            <option value="loft" {% if request.args.get('house_type') == 'loft' %}selected{% endif %}>Loft</option>
-                        </select>
-                    </div>
-                    
-                    <div class="row mb-3">
-                        <div class="col-6">
-                            <label class="form-label">最低租金</label>
-                            <input type="number" name="min_price" class="form-control" 
-                                   placeholder="0" min="0"
-                                   value="{{ request.args.get('min_price', '') }}">
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label">最高租金</label>
-                            <input type="number" name="max_price" class="form-control" 
-                                   placeholder="100000" min="0"
-                                   value="{{ request.args.get('max_price', '') }}">
-                        </div>
-                    </div>
-                    
-                    <div class="row mb-3">
-                        <div class="col-6">
-                            <label class="form-label">最小面积</label>
-                            <input type="number" name="min_size" class="form-control" 
-                                   placeholder="0" min="0"
-                                   value="{{ request.args.get('min_size', '') }}">
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label">最大面积</label>
-                            <input type="number" name="max_size" class="form-control" 
-                                   placeholder="500" min="0"
-                                   value="{{ request.args.get('max_size', '') }}">
-                        </div>
-                    </div>
-                    
                     <div class="mb-3">
                         <label class="form-label">户型</label>
                         <select name="room_count" class="form-select">
                             <option value="">全部户型</option>
-                            <option value="1室1厅" {% if request.args.get('room_count') == '1室1厅' %}selected{% endif %}>1室1厅</option>
-                            <option value="2室1厅" {% if request.args.get('room_count') == '2室1厅' %}selected{% endif %}>2室1厅</option>
-                            <option value="2室2厅" {% if request.args.get('room_count') == '2室2厅' %}selected{% endif %}>2室2厅</option>
-                            <option value="3室1厅" {% if request.args.get('room_count') == '3室1厅' %}selected{% endif %}>3室1厅</option>
-                            <option value="3室2厅" {% if request.args.get('room_count') == '3室2厅' %}selected{% endif %}>3室2厅</option>
-                            <option value="4室及以上" {% if request.args.get('room_count') == '4室及以上' %}selected{% endif %}>4室及以上</option>
+                            {% for r in room_counts %}
+                            <option value="{{ r[0] }}" {% if room_count == r[0] %}selected{% endif %}>{{ r[0] }} ({{ r[1] }})</option>
+                            {% endfor %}
                         </select>
                     </div>
-                    
+
+                    <div class="mb-3">
+                        <label class="form-label">租金范围 (元/月)</label>
+                        <div class="input-group">
+                            <input type="number" name="min_price" class="form-control" placeholder="最低" value="{{ min_price }}">
+                            <span class="input-group-text">-</span>
+                            <input type="number" name="max_price" class="form-control" placeholder="最高" value="{{ max_price }}">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">面积范围 (㎡)</label>
+                        <div class="input-group">
+                            <input type="number" name="min_size" class="form-control" placeholder="最小" value="{{ min_size }}">
+                            <span class="input-group-text">-</span>
+                            <input type="number" name="max_size" class="form-control" placeholder="最大" value="{{ max_size }}">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">房屋类型</label>
+                        <select name="house_type" class="form-select">
+                            <option value="">全部</option>
+                            {% for t in house_types %}
+                            <option value="{{ t[0] }}" {% if house_type == t[0] %}selected{% endif %}>{{ t[0] }} ({{ t[1] }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
                     <div class="mb-3">
                         <label class="form-label">装修情况</label>
                         <select name="decoration" class="form-select">
                             <option value="">全部</option>
-                            <option value="精装" {% if request.args.get('decoration') == '精装' %}selected{% endif %}>精装</option>
-                            <option value="简装" {% if request.args.get('decoration') == '简装' %}selected{% endif %}>简装</option>
-                            <option value="毛坯" {% if request.args.get('decoration') == '毛坯' %}selected{% endif %}>毛坯</option>
+                            {% for d in decorations %}
+                            <option value="{{ d[0] }}" {% if decoration == d[0] %}selected{% endif %}>{{ d[0] }} ({{ d[1] }})</option>
+                            {% endfor %}
                         </select>
                     </div>
-                    
+
                     <div class="mb-3">
                         <label class="form-label">排序方式</label>
                         <select name="sort_by" class="form-select">
-                            <option value="created_at" {% if request.args.get('sort_by') == 'created_at' or not request.args.get('sort_by') %}selected{% endif %}>最新发布</option>
-                            <option value="rent_price" {% if request.args.get('sort_by') == 'rent_price' %}selected{% endif %}>租金从低到高</option>
-                            <option value="rent_price_desc" {% if request.args.get('sort_by') == 'rent_price_desc' %}selected{% endif %}>租金从高到低</option>
-                            <option value="size" {% if request.args.get('sort_by') == 'size' %}selected{% endif %}>面积从大到小</option>
+                            <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>最新发布</option>
+                            <option value="rent_price" {% if sort_by == 'rent_price' %}selected{% endif %}>租金从低到高</option>
+                            <option value="rent_price_desc" {% if sort_by == 'rent_price_desc' %}selected{% endif %}>租金从高到低</option>
+                            <option value="size" {% if sort_by == 'size' %}selected{% endif %}>面积从大到小</option>
                         </select>
                     </div>
-                    
-                    <button type="submit" class="btn btn-primary w-100">
-                        <i class="fas fa-search"></i> 搜索
+
+                    <button type="submit" class="btn btn-primary w-100 mb-2">
+                        <i class="bi bi-search"></i> 搜索
                     </button>
+                    <a href="{{ url_for('search.index') }}" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-x-circle"></i> 清除筛选
+                    </a>
                 </form>
             </div>
         </div>
     </div>
-    
+
     <!-- 搜索结果 -->
-    <div class="col-md-8">
+    <div class="col-md-9">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h3>
-                {% if request.args.get('keyword') or request.args.get('district') or request.args.get('house_type') %}
+            <h4>
+                {% if keyword or province or city or district or house_type or room_count or min_price or max_price or min_size or max_size or decoration %}
                 搜索结果
                 {% else %}
-                智能推荐
+                全部房源
                 {% endif %}
-            </h3>
-            <span class="text-muted">找到 {{ houses.total }} 套房源</span>
+            </h4>
+            <span class="text-muted">共找到 <strong>{{ houses.total }}</strong> 个房源</span>
         </div>
-        
+
+        {% if houses.items %}
         <div class="row">
             {% for house in houses.items %}
-            <div class="col-md-6 mb-4">
+            <div class="col-md-4 mb-3">
                 <div class="card house-card h-100">
-                    {% if house.get_images_list() %}
-                        <img src="{{ url_for('static', filename=house.get_images_list()[0]) }}" 
-                             class="card-img-top" alt="{{ house.title }}" 
-                             style="height: 180px; object-fit: cover;">
+                    {% if house.get_images() %}
+                    <img src="{{ house.get_images()[0].url }}" class="card-img-top" style="height: 180px; object-fit: cover;" alt="{{ house.title }}">
                     {% else %}
-                        <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" 
-                             style="height: 180px;">
-                            <i class="fas fa-home text-white fa-3x"></i>
-                        </div>
+                    <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" style="height: 180px;">
+                        <i class="bi bi-house text-white" style="font-size: 3rem;"></i>
+                    </div>
                     {% endif %}
-                    
                     <div class="card-body">
-                        <h5 class="card-title">{{ house.title }}</h5>
+                        <h5 class="card-title text-truncate">{{ house.title }}</h5>
                         <p class="card-text text-muted small">
-                            <i class="fas fa-map-marker-alt"></i> {{ house.district }} · {{ house.address }}
-                        </p>
-                        <p class="card-text small">
-                            {{ house.room_count }} · {{ house.size }}㎡ · {{ house.decoration or '未填写' }}
+                            <i class="bi bi-geo-alt"></i> {{ house.address }}
                         </p>
                         <div class="d-flex justify-content-between align-items-center">
-                            <h6 class="text-primary mb-0">¥{{ house.rent_price }}/月</h6>
-                            <a href="{{ url_for('house.detail', id=house.id) }}" class="btn btn-sm btn-outline-primary">
-                                查看详情
-                            </a>
+                            <span class="text-primary fw-bold h5">¥{{ house.rent_price }}/月</span>
+                            <span class="badge bg-secondary">{{ house.room_count }}</span>
+                        </div>
+                        <div class="mt-2">
+                            <small class="text-muted">{{ house.size }}㎡ | {{ house.decoration }}</small>
                         </div>
                     </div>
-                </div>
-            </div>
-            {% else %}
-            <div class="col-12">
-                <div class="alert alert-info text-center">
-                    <i class="fas fa-info-circle fa-2x"></i>
-                    <p class="mt-2">没有找到符合条件的房源</p>
-                    <p class="small text-muted">请尝试调整搜索条件</p>
+                    <div class="card-footer">
+                        <a href="{{ url_for('house.detail', id=house.id) }}" class="btn btn-sm btn-outline-primary w-100">查看详情</a>
+                    </div>
                 </div>
             </div>
             {% endfor %}
         </div>
-        
-        <!-- 分页 -->
-        {% if houses.pages > 1 %}
-        <nav aria-label="Page navigation">
+
+        {% if houses.has_prev or houses.has_next %}
+        <nav>
             <ul class="pagination justify-content-center">
                 {% if houses.has_prev %}
-                <li class="page-item">
-                    <a class="page-link" href="{{ url_for('search.index', page=houses.prev_num, keyword=request.args.get('keyword', ''), district=request.args.get('district', ''), house_type=request.args.get('house_type', ''), min_price=request.args.get('min_price', ''), max_price=request.args.get('max_price', ''), min_size=request.args.get('min_size', ''), max_size=request.args.get('max_size', ''), room_count=request.args.get('room_count', ''), decoration=request.args.get('decoration', ''), sort_by=request.args.get('sort_by', 'created_at')) }}">上一页</a>
-                </li>
+                <li class="page-item"><a class="page-link" href="{{ url_for('search.index', page=houses.prev_num, keyword=keyword, province=province, city=city, district=district, house_type=house_type, room_count=room_count, min_price=min_price, max_price=max_price, min_size=min_size, max_size=max_size, decoration=decoration, sort_by=sort_by) }}">上一页</a></li>
                 {% endif %}
-                
-                {% for page_num in houses.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
-                    {% if page_num %}
-                        <li class="page-item {% if page_num == houses.page %}active{% endif %}">
-                            <a class="page-link" href="{{ url_for('search.index', page=page_num, keyword=request.args.get('keyword', ''), district=request.args.get('district', ''), house_type=request.args.get('house_type', ''), min_price=request.args.get('min_price', ''), max_price=request.args.get('max_price', ''), min_size=request.args.get('min_size', ''), max_size=request.args.get('max_size', ''), room_count=request.args.get('room_count', ''), decoration=request.args.get('decoration', ''), sort_by=request.args.get('sort_by', 'created_at')) }}">{{ page_num }}</a>
-                        </li>
-                    {% else %}
-                        <li class="page-item disabled"><span class="page-link">...</span></li>
-                    {% endif %}
-                {% endfor %}
-                
+                <li class="page-item disabled"><span class="page-link">第 {{ houses.page }} / {{ houses.pages }} 页</span></li>
                 {% if houses.has_next %}
-                <li class="page-item">
-                    <a class="page-link" href="{{ url_for('search.index', page=houses.next_num, keyword=request.args.get('keyword', ''), district=request.args.get('district', ''), house_type=request.args.get('house_type', ''), min_price=request.args.get('min_price', ''), max_price=request.args.get('max_price', ''), min_size=request.args.get('min_size', ''), max_size=request.args.get('max_size', ''), room_count=request.args.get('room_count', ''), decoration=request.args.get('decoration', ''), sort_by=request.args.get('sort_by', 'created_at')) }}">下一页</a>
-                </li>
+                <li class="page-item"><a class="page-link" href="{{ url_for('search.index', page=houses.next_num, keyword=keyword, province=province, city=city, district=district, house_type=house_type, room_count=room_count, min_price=min_price, max_price=max_price, min_size=min_size, max_size=max_size, decoration=decoration, sort_by=sort_by) }}">下一页</a></li>
                 {% endif %}
             </ul>
         </nav>
         {% endif %}
+
+        {% else %}
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> 未找到符合条件的房源，请尝试调整搜索条件
+        </div>
+        {% endif %}
     </div>
 </div>
+
+<script>
+let regionsData = {
+    provinces: {},
+    cities: {},
+    districts: {}
+};
+
+async function loadProvinces() {
+    try {
+        const response = await fetch('/api/regions/provinces');
+        const data = await response.json();
+        const select = document.getElementById('provinceSelect');
+        select.innerHTML = '<option value="">选择省份</option>';
+        data.forEach(p => {
+            select.innerHTML += `<option value="${p.code}">${p.name}</option>`;
+            regionsData.provinces[p.code] = p;
+        });
+        
+        // 恢复之前的选择
+        const selectedProvince = "{{ province }}";
+        if (selectedProvince) {
+            select.value = selectedProvince;
+            loadCities(selectedProvince, "{{ city }}", "{{ district }}");
+        }
+    } catch (error) {
+        console.error('加载省份失败:', error);
+    }
+}
+
+async function loadCities(provinceCode, selectedCity = '', selectedDistrict = '') {
+    const citySelect = document.getElementById('citySelect');
+    const districtSelect = document.getElementById('districtSelect');
+
+    if (!provinceCode) {
+        citySelect.innerHTML = '<option value="">选择城市</option>';
+        citySelect.disabled = true;
+        districtSelect.innerHTML = '<option value="">选择区县</option>';
+        districtSelect.disabled = true;
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/regions/${provinceCode}/cities`);
+        const data = await response.json();
+        citySelect.innerHTML = '<option value="">选择城市</option>';
+        data.forEach(c => {
+            citySelect.innerHTML += `<option value="${c.code}">${c.name}</option>`;
+            regionsData.cities[c.code] = c;
+        });
+        citySelect.disabled = false;
+        districtSelect.innerHTML = '<option value="">选择区县</option>';
+        districtSelect.disabled = true;
+        
+        // 恢复之前的选择
+        if (selectedCity) {
+            citySelect.value = selectedCity;
+            loadDistricts(selectedCity, selectedDistrict);
+        }
+    } catch (error) {
+        console.error('加载城市失败:', error);
+    }
+}
+
+async function loadDistricts(cityCode, selectedDistrict = '') {
+    const districtSelect = document.getElementById('districtSelect');
+
+    if (!cityCode) {
+        districtSelect.innerHTML = '<option value="">选择区县</option>';
+        districtSelect.disabled = true;
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/regions/${cityCode}/districts`);
+        const data = await response.json();
+        districtSelect.innerHTML = '<option value="">选择区县</option>';
+        data.forEach(d => {
+            districtSelect.innerHTML += `<option value="${d.code}">${d.name}</option>`;
+            regionsData.districts[d.code] = d;
+        });
+        districtSelect.disabled = false;
+        
+        // 恢复之前的选择
+        if (selectedDistrict) {
+            districtSelect.value = selectedDistrict;
+        }
+    } catch (error) {
+        console.error('加载区县失败:', error);
+    }
+}
+
+// 页面加载时初始化
+document.addEventListener('DOMContentLoaded', function() {
+    loadProvinces();
+});
+</script>
 {% endblock %}
