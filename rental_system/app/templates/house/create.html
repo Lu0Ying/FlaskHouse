@@ -1,5 +1,270 @@
 {% extends "base.html" %}
-{% block title %}Page{% endblock %}
+
+{% block title %}发布房源 - 房屋租赁系统{% endblock %}
+
 {% block content %}
-<h1>Page Title</h1>
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-home"></i> 发布新房源</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('house.store') }}" id="houseForm">
+                        <div class="mb-3">
+                            <label class="form-label">房源标题 <span class="text-danger">*</span></label>
+                            <input type="text" name="title" class="form-control" required
+                                   placeholder="例如：朝阳区三居室精装修出租">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">区域选择 <span class="text-danger">*</span></label>
+                            <div class="row g-2" id="regionSelector">
+                                <div class="col-md-4">
+                                    <select name="province" id="provinceSelect" class="form-select" onchange="loadCities(this.value)" required>
+                                        <option value="">选择省份</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <select name="city" id="citySelect" class="form-select" onchange="loadDistricts(this.value)" required disabled>
+                                        <option value="">选择城市</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <select name="district" id="districtSelect" class="form-select" required disabled>
+                                        <option value="">选择区县</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <input type="hidden" name="province_code" id="provinceCode">
+                            <input type="hidden" name="city_code" id="cityCode">
+                            <input type="hidden" name="district_code" id="districtCode">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">详细地址 <span class="text-danger">*</span></label>
+                            <input type="text" name="address" class="form-control" required
+                                   placeholder="小区名称、楼号、单元号等">
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">房屋类型</label>
+                                <select name="type" class="form-select">
+                                    <option value="">请选择</option>
+                                    <option value="公寓">公寓</option>
+                                    <option value="住宅">住宅</option>
+                                    <option value="别墅">别墅</option>
+                                    <option value="loft">Loft</option>
+                                    <option value="平房">平房</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">户型 <span class="text-danger">*</span></label>
+                                <select name="room_count" class="form-select" required>
+                                    <option value="">请选择</option>
+                                    <option value="1室0厅">1室0厅</option>
+                                    <option value="1室1厅">1室1厅</option>
+                                    <option value="2室1厅">2室1厅</option>
+                                    <option value="2室2厅">2室2厅</option>
+                                    <option value="3室1厅">3室1厅</option>
+                                    <option value="3室2厅">3室2厅</option>
+                                    <option value="4室1厅">4室1厅</option>
+                                    <option value="4室2厅">4室2厅</option>
+                                    <option value="5室及以上">5室及以上</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">面积（平方米）</label>
+                                <input type="number" name="size" class="form-control" min="0"
+                                       placeholder="例如：85">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">装修情况</label>
+                                <select name="decoration" class="form-select">
+                                    <option value="">请选择</option>
+                                    <option value="精装">精装</option>
+                                    <option value="简装">简装</option>
+                                    <option value="毛坯">毛坯</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">租金（元/月） <span class="text-danger">*</span></label>
+                                <input type="number" name="rent_price" class="form-control" required min="0"
+                                       placeholder="例如：5000">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">押金（元）</label>
+                                <input type="number" name="deposit" class="form-control" min="0"
+                                       placeholder="例如：10000">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">房源描述</label>
+                            <textarea name="description" class="form-control" rows="4"
+                                      placeholder="描述房屋的特色、配套设施、交通情况等"></textarea>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-upload"></i> 发布房源
+                            </button>
+                            <a href="{{ url_for('house.index') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left"></i> 返回
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let regionsData = {
+    provinces: {},
+    cities: {},
+    districts: {}
+};
+
+let selectedProvince = null;
+let selectedCity = null;
+let selectedDistrict = null;
+
+async function loadProvinces() {
+    try {
+        const response = await fetch('/api/regions/provinces');
+        const data = await response.json();
+        const select = document.getElementById('provinceSelect');
+        select.innerHTML = '<option value="">选择省份</option>';
+        data.forEach(p => {
+            select.innerHTML += `<option value="${p.code}">${p.name}</option>`;
+            regionsData.provinces[p.code] = p;
+        });
+    } catch (error) {
+        console.error('加载省份失败:', error);
+        alert('加载省份数据失败，请刷新页面重试');
+    }
+}
+
+async function loadCities(provinceCode) {
+    const citySelect = document.getElementById('citySelect');
+    const districtSelect = document.getElementById('districtSelect');
+
+    document.getElementById('provinceCode').value = '';
+    document.getElementById('cityCode').value = '';
+    document.getElementById('districtCode').value = '';
+    selectedProvince = null;
+    selectedCity = null;
+    selectedDistrict = null;
+
+    if (!provinceCode) {
+        citySelect.innerHTML = '<option value="">选择城市</option>';
+        citySelect.disabled = true;
+        districtSelect.innerHTML = '<option value="">选择区县</option>';
+        districtSelect.disabled = true;
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/regions/${provinceCode}/cities`);
+        const data = await response.json();
+        citySelect.innerHTML = '<option value="">选择城市</option>';
+        data.forEach(c => {
+            citySelect.innerHTML += `<option value="${c.code}">${c.name}</option>`;
+            regionsData.cities[c.code] = c;
+        });
+        citySelect.disabled = false;
+        districtSelect.innerHTML = '<option value="">选择区县</option>';
+        districtSelect.disabled = true;
+
+        selectedProvince = regionsData.provinces[provinceCode];
+        document.getElementById('provinceCode').value = provinceCode;
+    } catch (error) {
+        console.error('加载城市失败:', error);
+        alert('加载城市数据失败');
+    }
+}
+
+async function loadDistricts(cityCode) {
+    const districtSelect = document.getElementById('districtSelect');
+
+    document.getElementById('cityCode').value = '';
+    document.getElementById('districtCode').value = '';
+    selectedCity = null;
+    selectedDistrict = null;
+
+    if (!cityCode) {
+        districtSelect.innerHTML = '<option value="">选择区县</option>';
+        districtSelect.disabled = true;
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/regions/${cityCode}/districts`);
+        const data = await response.json();
+        districtSelect.innerHTML = '<option value="">选择区县</option>';
+        data.forEach(d => {
+            districtSelect.innerHTML += `<option value="${d.code}">${d.name}</option>`;
+            regionsData.districts[d.code] = d;
+        });
+        districtSelect.disabled = false;
+
+        selectedCity = regionsData.cities[cityCode];
+        document.getElementById('cityCode').value = cityCode;
+    } catch (error) {
+        console.error('加载区县失败:', error);
+        alert('加载区县数据失败');
+    }
+}
+
+document.getElementById('districtSelect').addEventListener('change', function(e) {
+    const districtCode = e.target.value;
+    if (districtCode) {
+        selectedDistrict = regionsData.districts[districtCode];
+        document.getElementById('districtCode').value = districtCode;
+    } else {
+        selectedDistrict = null;
+        document.getElementById('districtCode').value = '';
+    }
+});
+
+document.getElementById('houseForm').addEventListener('submit', function(e) {
+    const province = document.getElementById('provinceSelect').value;
+    const city = document.getElementById('citySelect').value;
+    const district = document.getElementById('districtSelect').value;
+
+    if (!province) {
+        e.preventDefault();
+        alert('请选择省份');
+        return false;
+    }
+
+    if (!city) {
+        e.preventDefault();
+        alert('请选择城市');
+        return false;
+    }
+
+    if (!district) {
+        e.preventDefault();
+        alert('请选择区县');
+        return false;
+    }
+
+    return true;
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadProvinces();
+});
+</script>
 {% endblock %}

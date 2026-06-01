@@ -59,6 +59,9 @@ def create_app(config_class=Config):
     from app.monitor import bp as monitor_bp
     app.register_blueprint(monitor_bp, url_prefix='/monitor')
     
+    from app.regions import bp as regions_bp
+    app.register_blueprint(regions_bp, url_prefix='/api/regions')
+    
     # 注册错误处理
     register_error_handlers(app)
 

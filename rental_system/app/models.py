@@ -64,6 +64,50 @@ class User(UserMixin, db.Model):
         return f'<User {self.username}>'
 
 
+class Region(db.Model):
+    """行政区划模型（省/市/区）"""
+    __tablename__ = 'regions'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    code = db.Column(db.String(20), unique=True, nullable=False, index=True)  # 行政区划代码
+    name = db.Column(db.String(100), nullable=False)  # 名称
+    parent_code = db.Column(db.String(20), index=True)  # 父级代码（省为空，市为省代码，区为市代码）
+    level = db.Column(db.Integer, nullable=False)  # 级别：1-省/直辖市/自治区，2-市/区，3-县/区
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    
+    def __repr__(self):
+        return f'<Region {self.name}>'
+    
+    @staticmethod
+    def get_provinces():
+        """获取所有省份"""
+        return Region.query.filter_by(level=1, is_active=True).order_by(Region.code).all()
+    
+    @staticmethod
+    def get_cities(province_code):
+        """获取指定省份下的所有城市"""
+        return Region.query.filter_by(parent_code=province_code, level=2, is_active=True).order_by(Region.code).all()
+    
+    @staticmethod
+    def get_districts(city_code):
+        """获取指定城市下的所有区县"""
+        return Region.query.filter_by(parent_code=city_code, level=3, is_active=True).order_by(Region.code).all()
+    
+    @staticmethod
+    def get_by_code(code):
+        """根据代码获取地区"""
+        return Region.query.filter_by(code=code, is_active=True).first()
+    
+    @staticmethod
+    def search_by_name(name, level=None):
+        """根据名称搜索地区"""
+        query = Region.query.filter(Region.name.like(f'%{name}%'), Region.is_active == True)
+        if level:
+            query = query.filter_by(level=level)
+        return query.order_by(Region.level, Region.code).all()
+
+
 class House(db.Model):
     """房源模型"""
     __tablename__ = 'houses'
@@ -84,6 +128,9 @@ class House(db.Model):
     status = db.Column(db.String(20), default='available')  # available/rented/maintenance
     lat = db.Column(db.Float)  # 纬度
     lng = db.Column(db.Float)  # 经度
+    province_code = db.Column(db.String(20))  # 省份代码
+    city_code = db.Column(db.String(20))  # 城市代码
+    district_code = db.Column(db.String(20))  # 区县代码
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc),
                           onupdate=lambda: datetime.now(timezone.utc))

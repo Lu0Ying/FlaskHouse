@@ -19,16 +19,103 @@
                     
                     <div class="mb-3">
                         <label class="form-label">区域</label>
-                        <select name="district" class="form-select">
-                            <option value="">全部区域</option>
-                            <option value="朝阳区" {% if request.args.get('district') == '朝阳区' %}selected{% endif %}>北京市/朝阳区</option>
-                            <option value="海淀区" {% if request.args.get('district') == '海淀区' %}selected{% endif %}>北京市/海淀区</option>
-                            <option value="东城区" {% if request.args.get('district') == '东城区' %}selected{% endif %}>北京市/东城区</option>
-                            <option value="西城区" {% if request.args.get('district') == '西城区' %}selected{% endif %}>北京市/西城区</option>
-                            <option value="丰台区" {% if request.args.get('district') == '丰台区' %}selected{% endif %}>北京市/丰台区</option>
-                            <option value="石景山区" {% if request.args.get('district') == '石景山区' %}selected{% endif %}>北京市/石景山区</option>
-                        </select>
+                        <div class="row g-2" id="regionSelector">
+                            <div class="col-4">
+                                <select name="province" id="provinceSelect" class="form-select form-select-sm" onchange="loadCities(this.value)">
+                                    <option value="">省份</option>
+                                </select>
+                            </div>
+                            <div class="col-4">
+                                <select name="city" id="citySelect" class="form-select form-select-sm" onchange="loadDistricts(this.value)" disabled>
+                                    <option value="">城市</option>
+                                </select>
+                            </div>
+                            <div class="col-4">
+                                <select name="district" id="districtSelect" class="form-select form-select-sm" disabled>
+                                    <option value="">区县</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-text">请先选择省份，然后选择城市，最后选择区县</div>
                     </div>
+
+                    <script>
+                    let regionsData = {
+                        provinces: {},
+                        cities: {},
+                        districts: {}
+                    };
+
+                    async function loadProvinces() {
+                        try {
+                            const response = await fetch('/api/regions/provinces');
+                            const data = await response.json();
+                            const select = document.getElementById('provinceSelect');
+                            select.innerHTML = '<option value="">选择省份</option>';
+                            data.forEach(p => {
+                                select.innerHTML += `<option value="${p.code}">${p.name}</option>`;
+                                regionsData.provinces[p.code] = p;
+                            });
+                        } catch (error) {
+                            console.error('加载省份失败:', error);
+                        }
+                    }
+
+                    async function loadCities(provinceCode) {
+                        const citySelect = document.getElementById('citySelect');
+                        const districtSelect = document.getElementById('districtSelect');
+
+                        if (!provinceCode) {
+                            citySelect.innerHTML = '<option value="">选择城市</option>';
+                            citySelect.disabled = true;
+                            districtSelect.innerHTML = '<option value="">选择区县</option>';
+                            districtSelect.disabled = true;
+                            return;
+                        }
+
+                        try {
+                            const response = await fetch(`/api/regions/${provinceCode}/cities`);
+                            const data = await response.json();
+                            citySelect.innerHTML = '<option value="">选择城市</option>';
+                            data.forEach(c => {
+                                citySelect.innerHTML += `<option value="${c.code}">${c.name}</option>`;
+                                regionsData.cities[c.code] = c;
+                            });
+                            citySelect.disabled = false;
+                            districtSelect.innerHTML = '<option value="">选择区县</option>';
+                            districtSelect.disabled = true;
+                        } catch (error) {
+                            console.error('加载城市失败:', error);
+                        }
+                    }
+
+                    async function loadDistricts(cityCode) {
+                        const districtSelect = document.getElementById('districtSelect');
+
+                        if (!cityCode) {
+                            districtSelect.innerHTML = '<option value="">选择区县</option>';
+                            districtSelect.disabled = true;
+                            return;
+                        }
+
+                        try {
+                            const response = await fetch(`/api/regions/${cityCode}/districts`);
+                            const data = await response.json();
+                            districtSelect.innerHTML = '<option value="">选择区县</option>';
+                            data.forEach(d => {
+                                districtSelect.innerHTML += `<option value="${d.code}">${d.name}</option>`;
+                                regionsData.districts[d.code] = d;
+                            });
+                            districtSelect.disabled = false;
+                        } catch (error) {
+                            console.error('加载区县失败:', error);
+                        }
+                    }
+
+                    document.addEventListener('DOMContentLoaded', function() {
+                        loadProvinces();
+                    });
+                    </script>
                     
                     <div class="mb-3">
                         <label class="form-label">房屋类型</label>

@@ -1,0 +1,575 @@
+<template>
+  <div class="region-selector">
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label class="form-label">省份</label>
+        <div class="input-group">
+          <input
+            type="text"
+            class="form-control"
+            v-model="provinceText"
+            @input="onProvinceInput"
+            @focus="showProvinceDropdown = true"
+            @blur="hideProvinceDropdown"
+            placeholder="请选择或输入省份"
+            :class="{'is-invalid': errors.province}"
+          >
+          <button class="btn btn-outline-secondary" type="button" @click="toggleProvinceDropdown">
+            <i class="bi bi-chevron-down"></i>
+          </button>
+          <div class="dropdown-menu" :class="{show: showProvinceDropdown && filteredProvinces.length > 0}" style="width: 100%; max-height: 250px; overflow-y: auto;">
+            <a class="dropdown-item"
+               v-for="province in filteredProvinces"
+               :key="province.code"
+               @mousedown.prevent="selectProvince(province)">
+              {{ province.name }}
+            </a>
+          </div>
+        </div>
+        <div class="invalid-feedback" v-if="errors.province">{{ errors.province }}</div>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">城市</label>
+        <div class="input-group">
+          <input
+            type="text"
+            class="form-control"
+            v-model="cityText"
+            @input="onCityInput"
+            @focus="showCityDropdown = true"
+            @blur="hideCityDropdown"
+            placeholder="请选择或输入城市"
+            :disabled="!selectedProvince"
+            :class="{'is-invalid': errors.city}"
+          >
+          <button class="btn btn-outline-secondary" type="button" @click="toggleCityDropdown" :disabled="!selectedProvince">
+            <i class="bi bi-chevron-down"></i>
+          </button>
+          <div class="dropdown-menu" :class="{show: showCityDropdown && filteredCities.length > 0}" style="width: 100%; max-height: 250px; overflow-y: auto;">
+            <a class="dropdown-item"
+               v-for="city in filteredCities"
+               :key="city.code"
+               @mousedown.prevent="selectCity(city)">
+              {{ city.name }}
+            </a>
+          </div>
+        </div>
+        <div class="invalid-feedback" v-if="errors.city">{{ errors.city }}</div>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">区县</label>
+        <div class="input-group">
+          <input
+            type="text"
+            class="form-control"
+            v-model="districtText"
+            @input="onDistrictInput"
+            @focus="showDistrictDropdown = true"
+            @blur="hideDistrictDropdown"
+            placeholder="请选择或输入区县"
+            :disabled="!selectedCity"
+            :class="{'is-invalid': errors.district}"
+          >
+          <button class="btn btn-outline-secondary" type="button" @click="toggleDistrictDropdown" :disabled="!selectedCity">
+            <i class="bi bi-chevron-down"></i>
+          </button>
+          <div class="dropdown-menu" :class="{show: showDistrictDropdown && filteredDistricts.length > 0}" style="width: 100%; max-height: 250px; overflow-y: auto;">
+            <a class="dropdown-item"
+               v-for="district in filteredDistricts"
+               :key="district.code"
+               @mousedown.prevent="selectDistrict(district)">
+              {{ district.name }}
+            </a>
+          </div>
+        </div>
+        <div class="invalid-feedback" v-if="errors.district">{{ errors.district }}</div>
+      </div>
+    </div>
+
+    <input type="hidden" :name="name + '_code'" :value="fullCode">
+    <input type="hidden" :name="name" :value="fullName">
+  </div>
+</template>
+
+<script>
+export default {
+  name: 'RegionSelector',
+  props: {
+    name: {
+      type: String,
+      default: 'region'
+    },
+    provinceCode: {
+      type: String,
+      default: ''
+    },
+    cityCode: {
+      type: String,
+      default: ''
+    },
+    districtCode: {
+      type: String,
+      default: ''
+    },
+    provinceName: {
+      type: String,
+      default: ''
+    },
+    cityName: {
+      type: String,
+      default: ''
+    },
+    districtName: {
+      type: String,
+      default: ''
+    }
+  },
+  data() {
+    return {
+      provinces: [],
+      cities: [],
+      districts: [],
+
+      selectedProvince: null,
+      selectedCity: null,
+      selectedDistrict: null,
+
+      provinceText: '',
+      cityText: '',
+      districtText: '',
+
+      filteredProvinces: [],
+      filteredCities: [],
+      filteredDistricts: [],
+
+      showProvinceDropdown: false,
+      showCityDropdown: false,
+      showDistrictDropdown: false,
+
+      errors: {
+        province: '',
+        city: '',
+        district: ''
+      },
+
+      debounceTimer: null
+    }
+  },
+  computed: {
+    fullCode() {
+      if (this.selectedDistrict) {
+        return this.selectedDistrict.code
+      } else if (this.selectedCity) {
+        return this.selectedCity.code
+      } else if (this.selectedProvince) {
+        return this.selectedProvince.code
+      }
+      return ''
+    },
+    fullName() {
+      if (this.selectedDistrict) {
+        return `${this.selectedProvince.name}${this.selectedCity.name}${this.selectedDistrict.name}`
+      } else if (this.selectedCity) {
+        return `${this.selectedProvince.name}${this.selectedCity.name}`
+      } else if (this.selectedProvince) {
+        return this.selectedProvince.name
+      }
+      return ''
+    }
+  },
+  watch: {
+    provinceCode: {
+      immediate: true,
+      handler(val) {
+        if (val) {
+          this.loadInitialData()
+        }
+      }
+    }
+  },
+  mounted() {
+    this.loadProvinces()
+    if (this.provinceName) {
+      this.provinceText = this.provinceName
+    }
+    if (this.cityName) {
+      this.cityText = this.cityName
+    }
+    if (this.districtName) {
+      this.districtText = this.districtName
+    }
+  },
+  methods: {
+    async loadProvinces() {
+      try {
+        const response = await fetch('/api/regions/provinces')
+        const data = await response.json()
+        this.provinces = data
+        this.filteredProvinces = data
+      } catch (error) {
+        console.error('加载省份失败:', error)
+      }
+    },
+
+    async loadCities(provinceCode) {
+      if (!provinceCode) {
+        this.cities = []
+        this.filteredCities = []
+        return
+      }
+      try {
+        const response = await fetch(`/api/regions/${provinceCode}/cities`)
+        const data = await response.json()
+        this.cities = data
+        this.filteredCities = data
+      } catch (error) {
+        console.error('加载城市失败:', error)
+      }
+    },
+
+    async loadDistricts(cityCode) {
+      if (!cityCode) {
+        this.districts = []
+        this.filteredDistricts = []
+        return
+      }
+      try {
+        const response = await fetch(`/api/regions/${cityCode}/districts`)
+        const data = await response.json()
+        this.districts = data
+        this.filteredDistricts = data
+      } catch (error) {
+        console.error('加载区县失败:', error)
+      }
+    },
+
+    async searchRegions(keyword, level) {
+      if (keyword.length < 2) return []
+      try {
+        const response = await fetch(`/api/regions/search?keyword=${encodeURIComponent(keyword)}`)
+        const data = await response.json()
+        return data.filter(r => r.level === level)
+      } catch (error) {
+        console.error('搜索地区失败:', error)
+        return []
+      }
+    },
+
+    async validateRegion(name, level) {
+      try {
+        const response = await fetch('/api/regions/validate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ name, level })
+        })
+        const data = await response.json()
+        return data
+      } catch (error) {
+        console.error('验证地区失败:', error)
+        return { valid: false }
+      }
+    },
+
+    onProvinceInput() {
+      this.errors.province = ''
+      const value = this.provinceText.trim()
+
+      if (this.debounceTimer) {
+        clearTimeout(this.debounceTimer)
+      }
+
+      if (value.length < 1) {
+        this.filteredProvinces = this.provinces
+        this.showProvinceDropdown = false
+        return
+      }
+
+      this.debounceTimer = setTimeout(async () => {
+        const exactMatch = this.provinces.find(p => p.name === value)
+        if (exactMatch) {
+          this.filteredProvinces = [exactMatch]
+        } else {
+          this.filteredProvinces = this.provinces.filter(p =>
+            p.name.toLowerCase().includes(value.toLowerCase())
+          )
+        }
+        this.showProvinceDropdown = true
+      }, 150)
+    },
+
+    onCityInput() {
+      this.errors.city = ''
+      const value = this.cityText.trim()
+
+      if (this.debounceTimer) {
+        clearTimeout(this.debounceTimer)
+      }
+
+      if (value.length < 1) {
+        this.filteredCities = this.cities
+        this.showCityDropdown = false
+        return
+      }
+
+      this.debounceTimer = setTimeout(async () => {
+        const exactMatch = this.cities.find(c => c.name === value)
+        if (exactMatch) {
+          this.filteredCities = [exactMatch]
+        } else {
+          this.filteredCities = this.cities.filter(c =>
+            c.name.toLowerCase().includes(value.toLowerCase())
+          )
+        }
+        this.showCityDropdown = true
+      }, 150)
+    },
+
+    onDistrictInput() {
+      this.errors.district = ''
+      const value = this.districtText.trim()
+
+      if (this.debounceTimer) {
+        clearTimeout(this.debounceTimer)
+      }
+
+      if (value.length < 1) {
+        this.filteredDistricts = this.districts
+        this.showDistrictDropdown = false
+        return
+      }
+
+      this.debounceTimer = setTimeout(async () => {
+        const exactMatch = this.districts.find(d => d.name === value)
+        if (exactMatch) {
+          this.filteredDistricts = [exactMatch]
+        } else {
+          this.filteredDistricts = this.districts.filter(d =>
+            d.name.toLowerCase().includes(value.toLowerCase())
+          )
+        }
+        this.showDistrictDropdown = true
+      }, 150)
+    },
+
+    async selectProvince(province) {
+      this.selectedProvince = province
+      this.provinceText = province.name
+      this.showProvinceDropdown = false
+      this.errors.province = ''
+
+      this.selectedCity = null
+      this.selectedDistrict = null
+      this.cityText = ''
+      this.districtText = ''
+      this.cities = []
+      this.districts = []
+
+      await this.loadCities(province.code)
+      this.$emit('update:provinceCode', province.code)
+      this.$emit('province-changed', province)
+    },
+
+    async selectCity(city) {
+      this.selectedCity = city
+      this.cityText = city.name
+      this.showCityDropdown = false
+      this.errors.city = ''
+
+      this.selectedDistrict = null
+      this.districtText = ''
+      this.districts = []
+
+      await this.loadDistricts(city.code)
+      this.$emit('update:cityCode', city.code)
+      this.$emit('city-changed', city)
+    },
+
+    selectDistrict(district) {
+      this.selectedDistrict = district
+      this.districtText = district.name
+      this.showDistrictDropdown = false
+      this.errors.district = ''
+      this.$emit('update:districtCode', district.code)
+      this.$emit('district-changed', district)
+    },
+
+    toggleProvinceDropdown() {
+      this.showProvinceDropdown = !thisProvinceDropdown
+      if (this.showProvinceDropdown) {
+        this.filteredProvinces = this.provinces
+      }
+    },
+
+    toggleCityDropdown() {
+      this.showCityDropdown = !this.showCityDropdown
+      if (this.showCityDropdown) {
+        this.filteredCities = this.cities
+      }
+    },
+
+    toggleDistrictDropdown() {
+      this.showDistrictDropdown = !this.showDistrictDropdown
+      if (this.showDistrictDropdown) {
+        this.filteredDistricts = this.districts
+      }
+    },
+
+    hideProvinceDropdown() {
+      setTimeout(() => {
+        this.showProvinceDropdown = false
+        this.validateProvinceInput()
+      }, 200)
+    },
+
+    hideCityDropdown() {
+      setTimeout(() => {
+        this.showCityDropdown = false
+        this.validateCityInput()
+      }, 200)
+    },
+
+    hideDistrictDropdown() {
+      setTimeout(() => {
+        this.showDistrictDropdown = false
+        this.validateDistrictInput()
+      }, 200)
+    },
+
+    async validateProvinceInput() {
+      const value = this.provinceText.trim()
+      if (!value) {
+        this.errors.province = '请选择省份'
+        return false
+      }
+
+      if (this.selectedProvince && this.selectedProvince.name === value) {
+        return true
+      }
+
+      const result = await this.validateRegion(value, 1)
+      if (result.valid) {
+        const province = this.provinces.find(p => p.code === result.region.code)
+        if (province) {
+          await this.selectProvince(province)
+          return true
+        }
+      }
+
+      this.errors.province = '请从下拉列表中选择有效的省份'
+      return false
+    },
+
+    async validateCityInput() {
+      const value = this.cityText.trim()
+      if (!value && !this.selectedProvince) {
+        return true
+      }
+      if (!value) {
+        this.errors.city = '请选择城市'
+        return false
+      }
+
+      if (this.selectedCity && this.selectedCity.name === value) {
+        return true
+      }
+
+      const result = await this.validateRegion(value, 2)
+      if (result.valid) {
+        const city = this.cities.find(c => c.code === result.region.code)
+        if (city) {
+          await this.selectCity(city)
+          return true
+        }
+      }
+
+      this.errors.city = '请从下拉列表中选择有效的城市'
+      return false
+    },
+
+    async validateDistrictInput() {
+      const value = this.districtText.trim()
+      if (!value && !this.selectedCity) {
+        return true
+      }
+      if (!value) {
+        this.errors.district = '请选择区县'
+        return false
+      }
+
+      if (this.selectedDistrict && this.selectedDistrict.name === value) {
+        return true
+      }
+
+      const result = await this.validateRegion(value, 3)
+      if (result.valid) {
+        const district = this.districts.find(d => d.code === result.region.code)
+        if (district) {
+          this.selectDistrict(district)
+          return true
+        }
+      }
+
+      this.errors.district = '请从下拉列表中选择有效的区县'
+      return false
+    },
+
+    async validate() {
+      const provinceValid = await this.validateProvinceInput()
+      if (!provinceValid) return false
+
+      if (this.cityText || this.selectedProvince) {
+        const cityValid = await this.validateCityInput()
+        if (!cityValid) return false
+      }
+
+      if (this.districtText || this.selectedCity) {
+        const districtValid = await this.validateDistrictInput()
+        if (!districtValid) return false
+      }
+
+      return true
+    },
+
+    async loadInitialData() {
+      if (this.provinceCode) {
+        await this.loadCities(this.provinceCode)
+        if (this.cityCode) {
+          await this.loadDistricts(this.cityCode)
+        }
+      }
+    },
+
+    getSelectedData() {
+      return {
+        province: this.selectedProvince,
+        city: this.selectedCity,
+        district: this.selectedDistrict,
+        fullCode: this.fullCode,
+        fullName: this.fullName
+      }
+    }
+  }
+}
+</script>
+
+<style scoped>
+.region-selector {
+  position: relative;
+}
+
+.dropdown-menu {
+  display: none;
+}
+
+.dropdown-menu.show {
+  display: block;
+}
+
+.invalid-feedback {
+  display: block;
+}
+</style>

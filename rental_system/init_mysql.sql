@@ -54,6 +54,9 @@ CREATE TABLE houses (
     status VARCHAR(20) DEFAULT 'available' COMMENT '状态: available/rented/maintenance',
     lat FLOAT COMMENT '纬度',
     lng FLOAT COMMENT '经度',
+    province_code VARCHAR(20) COMMENT '省份代码',
+    city_code VARCHAR(20) COMMENT '城市代码',
+    district_code VARCHAR(20) COMMENT '区县代码',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     
