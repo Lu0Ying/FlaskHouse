@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}{{ house.title }} - 房源管理{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- 图片区域 -->
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div id="houseCarousel" class="carousel slide" data-bs-ride="carousel">
+                <div class="carousel-indicators">
+                    {% for i in range(house.get_images_list()|length) %}
+                    <button type="button" data-bs-target="#houseCarousel" data-bs-slide-to="{{ i }}" 
+                            {% if i == 0 %}class="active"{% endif %} aria-current="true" 
+                            aria-label="Slide {{ i+1 }}"></button>
+                    {% endfor %}
+                </div>
+                <div class="carousel-inner" style="height: 400px;">
+                    {% if house.get_images_list() %}
+                        {% for img_url in house.get_images_list() %}
+                        <div class="carousel-item {% if loop.first %}active{% endif %}" style="height: 400px;">
+                            <img src="{{ url_for('static', filename=img_url) }}"
+                                 class="d-block w-100 h-100"
+                                 style="object-fit: cover; object-position: center;"
+                                 alt="{{ house.title }}">
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                    <div class="carousel-item active d-flex align-items-center justify-content-center bg-secondary" style="height: 400px;">
+                        <i class="bi bi-house text-white" style="font-size: 4rem;"></i>
+                    </div>
+                    {% endif %}
+                </div>
+                {% if house.get_images_list()|length > 1 %}
+                <button class="carousel-control-prev" type="button" data-bs-target="#houseCarousel" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Previous</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#houseCarousel" data-bs-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Next</span>
+                </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 房源信息 -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h2 class="card-title">{{ house.title }}</h2>
+                <div class="text-primary h3 mb-3">¥{{ house.rent_price }}/月</div>
+                
+                <div class="mb-3">
+                    <i class="bi bi-geo-alt text-muted"></i>
+                    <span>{{ house.address }}</span>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <div class="text-muted small">房屋类型</div>
+                        <div>{{ house.type or '未填写' }}</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-muted small">户型</div>
+                        <div>{{ house.room_count }}</div>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <div class="text-muted small">面积</div>
+                        <div>{{ house.size }}㎡</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-muted small">装修</div>
+                        <div>{{ house.decoration or '未填写' }}</div>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <div class="text-muted small">押金</div>
+                        <div>¥{{ house.deposit }}</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-muted small">状态</div>
+                        <div>
+                            {% if house.status == 'available' %}
+                            <span class="badge bg-success">可租</span>
+                            {% elif house.status == 'rented' %}
+                            <span class="badge bg-danger">已租</span>
+                            {% else %}
+                            <span class="badge bg-warning">维护中</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+                
+                <!-- 房东专属：显示出租状态，而非预约和联系按钮 -->
+                <div class="d-grid gap-2">
+                    {% if house.status == 'available' %}
+                    <div class="alert alert-success mb-0">
+                        <i class="bi bi-check-circle"></i> 当前状态：<strong>可出租</strong>
+                    </div>
+                    {% elif house.status == 'rented' %}
+                    <div class="alert alert-danger mb-0">
+                        <i class="bi bi-x-circle"></i> 当前状态：<strong>已出租</strong>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-warning mb-0">
+                        <i class="bi bi-exclamation-triangle"></i> 当前状态：<strong>维护中</strong>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="d-grid gap-2 mt-3">
+                    <a href="{{ url_for('house.edit', id=house.id) }}" class="btn btn-outline-primary">
+                        <i class="bi bi-pencil"></i> 编辑房源
+                    </a>
+                    <a href="{{ url_for('user.my_houses') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> 返回我的房源
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 房源描述 -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h3><i class="bi bi-align-left"></i> 房源描述</h3>
+    </div>
+    <div class="card-body">
+        {{ house.description or '暂无描述' }}
+    </div>
+</div>
+
+<!-- 房源统计信息 -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h3><i class="bi bi-bar-chart"></i> 房源统计</h3>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="text-center">
+                    <i class="bi bi-eye text-primary" style="font-size: 2rem;"></i>
+                    <div class="mt-2">
+                        <div class="text-muted small">浏览次数</div>
+                        <div class="h5 mb-0">{{ view_count or 0 }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center">
+                    <i class="bi bi-calendar-check text-success" style="font-size: 2rem;"></i>
+                    <div class="mt-2">
+                        <div class="text-muted small">预约次数</div>
+                        <div class="h5 mb-0">{{ appointment_count or 0 }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center">
+                    <i class="bi bi-file-text text-info" style="font-size: 2rem;"></i>
+                    <div class="mt-2">
+                        <div class="text-muted small">合同数量</div>
+                        <div class="h5 mb-0">{{ contract_count or 0 }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center">
+                    <i class="bi bi-tools text-warning" style="font-size: 2rem;"></i>
+                    <div class="mt-2">
+                        <div class="text-muted small">维修申请</div>
+                        <div class="h5 mb-0">{{ repair_count or 0 }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 位置地图 -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h3><i class="bi bi-map"></i> 位置地图</h3>
+    </div>
+    <div class="card-body">
+        <div class="bg-light rounded p-4 text-center" style="height: 300px;">
+            <i class="bi bi-geo-alt text-muted" style="font-size: 3rem;"></i>
+            <p class="text-muted mt-2">地图加载中...</p>
+            <p class="text-muted small">{{ house.address }}</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

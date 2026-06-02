@@ -49,3 +49,61 @@ def store():
         db.session.rollback()
         flash(f'发布失败：{str(e)}', 'danger')
         return redirect(url_for('house.create'))
+
+
+@bp.route('/<int:id>/delete', methods=['POST'])
+@login_required
+def delete(id):
+    """删除房源（API接口）"""
+    house = House.query.get_or_404(id)
+    
+    # 验证权限：只有房东本人或管理员可以删除
+    if house.landlord_id != current_user.id and not current_user.is_admin():
+        return jsonify({'success': False, 'message': '您无权删除此房源'})
+    
+    try:
+        db.session.delete(house)
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)})
+
+
+@bp.route('/<int:id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit(id):
+    """编辑房源"""
+    house = House.query.get_or_404(id)
+    
+    # 验证权限：只有房东本人可以编辑
+    if house.landlord_id != current_user.id:
+        flash('您无权编辑此房源', 'danger')
+        return redirect(url_for('house.index'))
+    
+    if request.method == 'POST':
+        try:
+            house.title = request.form.get('title')
+            house.address = request.form.get('address')
+            house.district = request.form.get('district', '')
+            house.area = request.form.get('area', '')
+            house.type = request.form.get('type', '')
+            house.room_count = request.form.get('room_count', '')
+            house.size = float(request.form.get('size', 0)) if request.form.get('size') else None
+            house.rent_price = float(request.form.get('rent_price'))
+            house.deposit = float(request.form.get('deposit', 0)) if request.form.get('deposit') else 0
+            house.decoration = request.form.get('decoration', '')
+            house.description = request.form.get('description', '')
+            house.status = request.form.get('status', 'available')
+            house.province_code = request.form.get('province_code', '')
+            house.city_code = request.form.get('city_code', '')
+            house.district_code = request.form.get('district_code', '')
+            
+            db.session.commit()
+            flash('房源更新成功！', 'success')
+            return redirect(url_for('user.house_detail', id=house.id))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'更新失败：{str(e)}', 'danger')
+    
+    return render_template('house/edit.html', house=house)

@@ -93,6 +93,35 @@ def my_houses():
     return render_template('user/my_houses.html', houses=houses, status=status)
 
 
+@bp.route('/house/<int:id>')
+@login_required
+def house_detail(id):
+    """房东专属的房源详情页"""
+    if not current_user.is_landlord():
+        flash('只有房东可以查看此页面', 'danger')
+        return redirect(url_for('house.index'))
+    
+    house = House.query.get_or_404(id)
+    
+    # 验证是否为该房东的房源
+    if house.landlord_id != current_user.id:
+        flash('您无权查看此房源', 'danger')
+        return redirect(url_for('user.my_houses'))
+    
+    # 获取统计信息（可选）
+    view_count = 0  # TODO: 实现浏览计数功能
+    appointment_count = house.appointments.count()
+    contract_count = house.contracts.count()
+    repair_count = house.repair_requests.count()
+    
+    return render_template('user/landlord_house_detail.html', 
+                          house=house,
+                          view_count=view_count,
+                          appointment_count=appointment_count,
+                          contract_count=contract_count,
+                          repair_count=repair_count)
+
+
 @bp.route('/my-appointments')
 @login_required
 def my_appointments():
