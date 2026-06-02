@@ -16,9 +16,10 @@
                 <div class="carousel-inner" style="height: 400px;">
                     {% if house.get_images_list() %}
                         {% for img_url in house.get_images_list() %}
-                        <div class="carousel-item {% if loop.first %}active{% endif %}">
-                            <img src="{{ url_for('static', filename=img_url) }}" 
-                                 class="d-block w-100 h-100 object-cover" 
+                        <div class="carousel-item {% if loop.first %}active{% endif %}" style="height: 400px;">
+                            <img src="{{ url_for('static', filename=img_url) }}"
+                                 class="d-block w-100 h-100"
+                                 style="object-fit: cover; object-position: center;"
                                  alt="{{ house.title }}">
                         </div>
                         {% endfor %}
