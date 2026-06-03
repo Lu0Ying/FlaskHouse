@@ -190,7 +190,7 @@ class LeaseContract(db.Model):
     rent_amount = db.Column(db.Float, nullable=False)
     deposit_amount = db.Column(db.Float, nullable=False)
     payment_method = db.Column(db.String(50))  # monthly/quarterly/etc
-    status = db.Column(db.String(20), default='pending')  # pending/active/terminated
+    status = db.Column(db.String(20), default='pending')  # pending/active/terminated/rejected
     signed_at = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     

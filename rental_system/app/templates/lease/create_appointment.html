@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}预约看房 - {{ house.title }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- 房源信息卡片 -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-house"></i> 预约看房</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            {% if house.get_images_list() %}
+                            <img src="{{ url_for('static', filename=house.get_images_list()[0]) }}" 
+                                 class="img-fluid rounded" alt="{{ house.title }}"
+                                 style="width: 100%; height: 150px; object-fit: cover;">
+                            {% else %}
+                            <div class="bg-secondary rounded d-flex align-items-center justify-content-center" 
+                                 style="height: 150px;">
+                                <i class="bi bi-image text-white" style="font-size: 3rem;"></i>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-8">
+                            <h5>{{ house.title }}</h5>
+                            <p class="text-muted mb-2">
+                                <i class="bi bi-geo-alt"></i> {{ house.address }}
+                            </p>
+                            <p class="mb-2">
+                                <span class="badge bg-secondary">{{ house.room_count }}</span>
+                                <span class="badge bg-secondary">{{ house.size }}㎡</span>
+                            </p>
+                            <h6 class="text-primary mb-0">¥{{ house.rent_price }}/月</h6>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 预约表单 -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-calendar-check"></i> 填写预约信息</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('lease.create_appointment', house_id=house.id) }}">
+                        <div class="mb-3">
+                            <label class="form-label">预约日期 <span class="text-danger">*</span></label>
+                            <input type="date" name="appointment_date" class="form-control" required
+                                   min="{{ today }}"
+                                   value="{{ today }}">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">预约时间 <span class="text-danger">*</span></label>
+                            <select name="appointment_time" class="form-select" required>
+                                <option value="">请选择时间</option>
+                                <option value="09:00">上午 09:00</option>
+                                <option value="09:30">上午 09:30</option>
+                                <option value="10:00">上午 10:00</option>
+                                <option value="10:30">上午 10:30</option>
+                                <option value="11:00">上午 11:00</option>
+                                <option value="11:30">上午 11:30</option>
+                                <option value="14:00">下午 14:00</option>
+                                <option value="14:30">下午 14:30</option>
+                                <option value="15:00">下午 15:00</option>
+                                <option value="15:30">下午 15:30</option>
+                                <option value="16:00">下午 16:00</option>
+                                <option value="16:30">下午 16:30</option>
+                                <option value="17:00">下午 17:00</option>
+                            </select>
+                            <div class="form-text">建议选择工作时间段，房东会尽快确认</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">备注信息</label>
+                            <textarea name="remark" class="form-control" rows="3"
+                                      placeholder="例如：希望了解房屋的配套设施、交通便利情况等（可选）"></textarea>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> 
+                            <strong>温馨提示：</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>提交后请等待房东确认，确认后会通过消息通知您</li>
+                                <li>如需取消预约，可以在"我的预约"中操作</li>
+                                <li>建议提前与房东沟通具体看房时间</li>
+                            </ul>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-send"></i> 提交预约
+                            </button>
+                            <a href="{{ url_for('house.detail', id=house.id) }}" 
+                               class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> 返回房源详情
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 设置最小日期为今天
+document.addEventListener('DOMContentLoaded', function() {
+    const dateInput = document.querySelector('input[name="appointment_date"]');
+    const today = new Date().toISOString().split('T')[0];
+    dateInput.min = today;
+});
+</script>
+{% endblock %}

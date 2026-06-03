@@ -7,7 +7,8 @@ from app.models import *
 @bp.route('/')
 def index():
     page = request.args.get('page', 1, type=int)
-    houses = House.query.order_by(House.created_at.desc()).paginate(page=page, per_page=10)
+    # 只显示状态为可租的房源
+    houses = House.query.filter_by(status='available').order_by(House.created_at.desc()).paginate(page=page, per_page=10)
     return render_template('house/index.html', houses=houses)
 
 @bp.route('/<int:id>')
@@ -94,7 +95,22 @@ def edit(id):
             house.deposit = float(request.form.get('deposit', 0)) if request.form.get('deposit') else 0
             house.decoration = request.form.get('decoration', '')
             house.description = request.form.get('description', '')
-            house.status = request.form.get('status', 'available')
+            
+            # 处理房源状态修改限制
+            new_status = request.form.get('status', house.status)
+            
+            # 如果当前状态是"已租"，不允许修改状态
+            if house.status == 'rented':
+                # 保持原状态不变
+                pass  # house.status 保持不变
+            else:
+                # 如果当前状态不是"已租"，只允许在"可租"和"维修中"之间切换
+                if new_status in ['available', 'maintenance']:
+                    house.status = new_status
+                else:
+                    # 如果尝试设置为其他状态，保持原状态不变
+                    pass
+            
             house.province_code = request.form.get('province_code', '')
             house.city_code = request.form.get('city_code', '')
             house.district_code = request.form.get('district_code', '')

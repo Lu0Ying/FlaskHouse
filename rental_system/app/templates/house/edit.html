@@ -114,11 +114,19 @@
 
                         <div class="mb-3">
                             <label class="form-label">房源状态</label>
-                            <select name="status" class="form-select">
+                            <select name="status" class="form-select" {% if house.status == 'rented' %}disabled{% endif %}>
+                                {% if house.status == 'rented' %}
+                                <option value="rented" selected>已租（不可修改）</option>
+                                {% else %}
                                 <option value="available" {% if house.status == 'available' %}selected{% endif %}>可租</option>
-                                <option value="rented" {% if house.status == 'rented' %}selected{% endif %}>已租</option>
                                 <option value="maintenance" {% if house.status == 'maintenance' %}selected{% endif %}>维护中</option>
+                                {% endif %}
                             </select>
+                            {% if house.status == 'rented' %}
+                            <small class="text-muted">房源已租出，状态不可修改。如需更改状态，请先终止相关租赁合同。</small>
+                            {% else %}
+                            <small class="text-muted">可在"可租"和"维护中"之间切换状态</small>
+                            {% endif %}
                         </div>
 
                         <div class="mb-3">

@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+{% block title %}发起租赁合同{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="bi bi-file-text"></i> 发起租赁合同</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('lease.create_contract_tenant') }}">
+                    <!-- 房源选择 -->
+                    <div class="mb-3">
+                        <label for="house_id" class="form-label">选择房源 <span class="text-danger">*</span></label>
+                        <select class="form-select" id="house_id" name="house_id" required onchange="updateHouseInfo()">
+                            <option value="">请选择要租赁的房源</option>
+                            {% for house in houses %}
+                            <option value="{{ house.id }}" 
+                                    data-title="{{ house.title }}"
+                                    data-address="{{ house.address }}"
+                                    data-rent="{{ house.rent_price }}"
+                                    data-deposit="{{ house.deposit }}"
+                                    data-landlord="{{ house.landlord.username }}"
+                                    {% if preselected_house and preselected_house.id == house.id %}selected{% endif %}>
+                                {{ house.title }} - {{ house.address }} (¥{{ house.rent_price }}/月)
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- 房源信息展示 -->
+                    <div id="houseInfo" class="alert alert-info" style="display: none;">
+                        <h6>房源信息：</h6>
+                        <p><strong>标题：</strong><span id="houseTitle"></span></p>
+                        <p><strong>地址：</strong><span id="houseAddress"></span></p>
+                        <p><strong>房东：</strong><span id="houseLandlord"></span></p>
+                        <p><strong>租金：</strong>¥<span id="houseRent"></span>/月</p>
+                        <p><strong>押金：</strong>¥<span id="houseDeposit"></span></p>
+                    </div>
+
+                    <!-- 租期设置 -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="start_date" class="form-label">开始日期 <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="start_date" name="start_date" 
+                                   min="{{ today }}" required onchange="calculateEndDate()">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="duration_months" class="form-label">入住时长（月） <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="duration_months" name="duration_months" 
+                                   min="1" placeholder="例如：6" required onchange="calculateEndDate()">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="end_date" class="form-label">结束日期（自动计算）</label>
+                        <input type="date" class="form-control" id="end_date" name="end_date" readonly>
+                        <small class="text-muted">根据开始日期和入住时长自动计算</small>
+                    </div>
+
+                    <!-- 租金和押金确认 -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="rent_amount" class="form-label">月租金（元） <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="rent_amount" name="rent_amount" 
+                                   step="0.01" min="0" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="deposit_amount" class="form-label">押金（元） <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="deposit_amount" name="deposit_amount" 
+                                   step="0.01" min="0" required>
+                        </div>
+                    </div>
+
+                    <!-- 支付方式 -->
+                    <div class="mb-3">
+                        <label for="payment_method" class="form-label">支付方式 <span class="text-danger">*</span></label>
+                        <select class="form-select" id="payment_method" name="payment_method" required>
+                            <option value="monthly">按月支付</option>
+                            <option value="quarterly">按季支付</option>
+                            <option value="yearly">按年支付</option>
+                        </select>
+                    </div>
+
+                    <!-- 备注 -->
+                    <div class="mb-3">
+                        <label for="remark" class="form-label">备注说明</label>
+                        <textarea class="form-control" id="remark" name="remark" rows="3" 
+                                  placeholder="如有特殊要求或说明，请在此填写..."></textarea>
+                    </div>
+
+                    <!-- 合同条款 -->
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="agree_terms" required>
+                            <label class="form-check-label" for="agree_terms">
+                                我已阅读并同意<a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">租赁合同条款</a>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('lease.contracts') }}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> 返回
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> 提交合同申请
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6><i class="bi bi-lightbulb"></i> 温馨提示</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle-fill text-success"></i> 
+                        选择您想要租赁的房源
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle-fill text-success"></i> 
+                        填写入住时长（单位：周）
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle-fill text-success"></i> 
+                        确认租金和押金金额
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle-fill text-success"></i> 
+                        提交后等待房东审批
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle-fill text-success"></i> 
+                        房东同意后合同生效
+                    </li>
+                </ul>
+                <hr>
+                <p class="text-muted small">
+                    <i class="bi bi-info-circle"></i> 
+                    合同提交后将发送给房东审批，房东同意后合同状态变为"生效中"。
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 合同条款模态框 -->
+<div class="modal fade" id="termsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">租赁合同条款</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <h6>第一条 房屋基本情况</h6>
+                <p>甲方（出租方）将位于指定地址的房屋出租给乙方（承租方）使用。</p>
+                
+                <h6>第二条 租赁期限</h6>
+                <p>租赁期限自合同约定的开始日期起至结束日期止。</p>
+                
+                <h6>第三条 租金及支付方式</h6>
+                <p>乙方应按合同约定的金额和支付方式向甲方支付租金。</p>
+                
+                <h6>第四条 押金</h6>
+                <p>乙方应向甲方支付押金，合同终止时如无违约情况，甲方应全额退还押金。</p>
+                
+                <h6>第五条 房屋使用</h6>
+                <p>乙方应合理使用房屋及其设施，不得擅自改变房屋结构或用途。</p>
+                
+                <h6>第六条 维修责任</h6>
+                <p>房屋及设施的自然损坏由甲方负责维修，人为损坏由乙方负责。</p>
+                
+                <h6>第七条 违约责任</h6>
+                <p>任何一方违反合同约定，应承担相应的违约责任。</p>
+                
+                <h6>第八条 合同解除</h6>
+                <p>经双方协商一致，可以解除本合同。</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">我已了解</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function updateHouseInfo() {
+    const select = document.getElementById('house_id');
+    const option = select.options[select.selectedIndex];
+    
+    if (option.value) {
+        document.getElementById('houseTitle').textContent = option.dataset.title;
+        document.getElementById('houseAddress').textContent = option.dataset.address;
+        document.getElementById('houseLandlord').textContent = option.dataset.landlord;
+        document.getElementById('houseRent').textContent = option.dataset.rent;
+        document.getElementById('houseDeposit').textContent = option.dataset.deposit;
+        
+        // 自动填充租金和押金
+        document.getElementById('rent_amount').value = option.dataset.rent;
+        document.getElementById('deposit_amount').value = option.dataset.deposit;
+        
+        document.getElementById('houseInfo').style.display = 'block';
+    } else {
+        document.getElementById('houseInfo').style.display = 'none';
+    }
+}
+
+function calculateEndDate() {
+    const startDate = document.getElementById('start_date').value;
+    const durationMonths = document.getElementById('duration_months').value;
+    
+    if (startDate && durationMonths) {
+        const start = new Date(startDate);
+        const months = parseInt(durationMonths);
+        
+        // 计算结束日期（按月）
+        const endYear = start.getFullYear() + Math.floor((start.getMonth() + months) / 12);
+        const endMonth = (start.getMonth() + months) % 12;
+        
+        // 处理月末日期问题
+        const lastDayOfMonth = new Date(endYear, endMonth + 1, 0).getDate();
+        const endDay = Math.min(start.getDate(), lastDayOfMonth);
+        
+        const end = new Date(endYear, endMonth, endDay);
+        
+        const year = end.getFullYear();
+        const month = String(end.getMonth() + 1).padStart(2, '0');
+        const day = String(end.getDate()).padStart(2, '0');
+        
+        document.getElementById('end_date').value = `${year}-${month}-${day}`;
+    }
+}
+
+// 页面加载时自动初始化房源信息
+document.addEventListener('DOMContentLoaded', function() {
+    updateHouseInfo();
+});
+</script>
+{% endblock %}

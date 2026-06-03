@@ -56,8 +56,8 @@
                         <td>¥{{ payment.amount }}</td>
                         <td>
                             {{ payment.due_date.strftime('%Y-%m-%d') }}
-                            {% if payment.status == 'unpaid' and payment.due_date < datetime.now().date() %}
-                            <span class="badge bg-danger ml-2">已逾期</span>
+                            {% if payment.status == 'unpaid' and payment.due_date < now().date() %}
+                            <span class="badge bg-danger ms-2">已逾期</span>
                             {% endif %}
                         </td>
                         <td>
@@ -75,11 +75,19 @@
                         <td>
                             <div class="btn-group" role="group">
                                 {% if payment.status == 'unpaid' and current_user.is_tenant() and current_user.id == payment.contract.tenant_id %}
-                                <form action="{{ url_for('lease.pay_rent', id=payment.id) }}" method="POST" class="d-inline">
-                                    <button type="submit" class="btn btn-sm btn-success" title="支付租金">
-                                        <i class="bi bi-credit-card"></i> 支付
-                                    </button>
-                                </form>
+                                <button type="button" class="btn btn-sm btn-success" 
+                                        title="支付租金"
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#paymentModal"
+                                        data-payment-id="{{ payment.id }}"
+                                        data-house-title="{{ payment.contract.house.title }}"
+                                        data-house-address="{{ payment.contract.house.address }}"
+                                        data-amount="{{ payment.amount }}"
+                                        data-due-date="{{ payment.due_date.strftime('%Y-%m-%d') }}"
+                                        data-contract-start="{{ payment.contract.start_date.strftime('%Y-%m-%d') }}"
+                                        data-contract-end="{{ payment.contract.end_date.strftime('%Y-%m-%d') }}">
+                                    <i class="bi bi-credit-card"></i> 支付
+                                </button>
                                 {% endif %}
                                 {% if payment.status == 'unpaid' and current_user.is_landlord() %}
                                 <form action="{{ url_for('lease.remind_rent', id=payment.id) }}" method="POST" class="d-inline">
@@ -127,9 +135,86 @@
         {% endif %}
     </div>
 </div>
-{% endblock %}
-{% block extra_js %}
+
+<!-- 支付确认模态框 -->
+<div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="paymentModalLabel">
+                    <i class="bi bi-credit-card"></i> 确认支付
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2 text-muted">房源信息</h6>
+                        <p class="mb-1"><strong>房源名称：</strong><span id="modalHouseTitle"></span></p>
+                        <p class="mb-1"><strong>地址：</strong><span id="modalHouseAddress"></span></p>
+                    </div>
+                </div>
+                
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2 text-muted">支付信息</h6>
+                        <p class="mb-1"><strong>应付金额：</strong><span class="text-danger h5">¥<span id="modalAmount"></span></span></p>
+                        <p class="mb-1"><strong>账单到期日：</strong><span id="modalDueDate"></span></p>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2 text-muted">合同期限</h6>
+                        <p class="mb-1"><strong>起始日期：</strong><span id="modalContractStart"></span></p>
+                        <p class="mb-1"><strong>到期日期：</strong><span id="modalContractEnd"></span></p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i> 取消
+                </button>
+                <form id="paymentForm" method="POST" action="">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-circle"></i> 确认支付
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
-    var datetime = new Date();
+// 监听模态框打开事件，填充数据
+document.addEventListener('DOMContentLoaded', function() {
+    var paymentModal = document.getElementById('paymentModal');
+    if (paymentModal) {
+        paymentModal.addEventListener('show.bs.modal', function(event) {
+            // 获取触发按钮
+            var button = event.relatedTarget;
+            
+            // 从按钮的data属性中获取数据
+            var paymentId = button.getAttribute('data-payment-id');
+            var houseTitle = button.getAttribute('data-house-title');
+            var houseAddress = button.getAttribute('data-house-address');
+            var amount = button.getAttribute('data-amount');
+            var dueDate = button.getAttribute('data-due-date');
+            var contractStart = button.getAttribute('data-contract-start');
+            var contractEnd = button.getAttribute('data-contract-end');
+            
+            // 填充模态框内容
+            document.getElementById('modalHouseTitle').textContent = houseTitle;
+            document.getElementById('modalHouseAddress').textContent = houseAddress;
+            document.getElementById('modalAmount').textContent = amount;
+            document.getElementById('modalDueDate').textContent = dueDate;
+            document.getElementById('modalContractStart').textContent = contractStart;
+            document.getElementById('modalContractEnd').textContent = contractEnd;
+            
+            // 设置表单action URL
+            document.getElementById('paymentForm').action = '/lease/pay-rent/' + paymentId;
+        });
+    }
+});
 </script>
 {% endblock %}

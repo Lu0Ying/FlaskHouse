@@ -2,14 +2,10 @@
 {% block title %}租赁合同{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2><i class="bi bi-file-text"></i> 租赁合同</h2>
-    {% if current_user.is_landlord() %}
-    <span class="text-muted">管理您的房源租赁合同</span>
-    {% elif current_user.is_admin() %}
-    <a href="{{ url_for('house.index') }}" class="btn btn-primary">
-        <i class="bi bi-plus"></i> 创建合同
+    <h2><i class="bi bi-file-text"></i> 我的租赁合同</h2>
+    <a href="{{ url_for('lease.create_contract_tenant') }}" class="btn btn-primary">
+        <i class="bi bi-plus"></i> 发起合同
     </a>
-    {% endif %}
 </div>
 
 <div class="card">
@@ -43,7 +39,7 @@
                     <tr>
                         <th>合同编号</th>
                         <th>房源信息</th>
-                        <th>租客</th>
+                        <th>房东</th>
                         <th>租期</th>
                         <th>租金</th>
                         <th>状态</th>
@@ -61,10 +57,8 @@
                             <p class="text-muted small">{{ contract.house.address }}</p>
                         </td>
                         <td>
-                            {{ contract.tenant.username }}
-                            {% if contract.tenant.phone %}
-                            <p class="text-muted small">{{ contract.tenant.phone }}</p>
-                            {% endif %}
+                            <div>{{ contract.landlord.username }}</div>
+                            <small class="text-muted">{{ contract.landlord.email }}</small>
                         </td>
                         <td>
                             {{ contract.start_date.strftime('%Y-%m-%d') }}
@@ -94,14 +88,14 @@
                                 <a href="{{ url_for('lease.view_contract', id=contract.id) }}" class="btn btn-sm btn-outline-primary" title="查看详情">
                                     <i class="bi bi-eye"></i> 详情
                                 </a>
-                                {% if contract.status == 'pending' and current_user.is_landlord() and current_user.id == contract.landlord_id %}
-                                <form action="{{ url_for('lease.reject_contract', id=contract.id) }}" method="POST" class="d-inline">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="拒绝出租请求" onclick="return confirm('确定拒绝此出租请求？')">
-                                        <i class="bi bi-x-circle"></i> 拒绝
+                                {% if contract.status == 'pending' %}
+                                <form action="{{ url_for('lease.cancel_contract', id=contract.id) }}" method="POST" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="取消申请" onclick="return confirm('确定取消此合同申请？')">
+                                        <i class="bi bi-x-circle"></i> 取消
                                     </button>
                                 </form>
                                 {% endif %}
-                                {% if contract.status == 'active' and (current_user.is_admin() or current_user.id == contract.landlord_id or current_user.id == contract.tenant_id) %}
+                                {% if contract.status == 'active' %}
                                 <form action="{{ url_for('lease.terminate_contract', id=contract.id) }}" method="POST" class="d-inline">
                                     <button type="submit" class="btn btn-sm btn-outline-danger" title="终止合同" onclick="return confirm('确定终止此合同？')">
                                         <i class="bi bi-x-circle"></i> 终止

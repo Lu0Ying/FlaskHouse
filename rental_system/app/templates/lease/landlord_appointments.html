@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block title %}看房预约管理 - 房屋租赁系统{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-calendar-check"></i> 看房预约管理</h2>
+</div>
+
+<!-- 状态筛选 -->
+<div class="mb-3">
+    <div class="btn-group" role="group">
+        <a href="{{ url_for('lease.landlord_appointments') }}" 
+           class="btn btn-outline-secondary {% if not status %}active{% endif %}">
+            全部
+        </a>
+        <a href="{{ url_for('lease.landlord_appointments', status='pending') }}" 
+           class="btn btn-outline-warning {% if status == 'pending' %}active{% endif %}">
+            待确认
+        </a>
+        <a href="{{ url_for('lease.landlord_appointments', status='confirmed') }}" 
+           class="btn btn-outline-success {% if status == 'confirmed' %}active{% endif %}">
+            已确认
+        </a>
+        <a href="{{ url_for('lease.landlord_appointments', status='completed') }}" 
+           class="btn btn-outline-info {% if status == 'completed' %}active{% endif %}">
+            已完成
+        </a>
+        <a href="{{ url_for('lease.landlord_appointments', status='cancelled') }}" 
+           class="btn btn-outline-danger {% if status == 'cancelled' %}active{% endif %}">
+            已取消
+        </a>
+    </div>
+</div>
+
+<!-- 预约列表 -->
+{% if appointments.items %}
+<div class="table-responsive">
+    <table class="table table-hover">
+        <thead class="table-light">
+            <tr>
+                <th>房源</th>
+                <th>租客</th>
+                <th>预约时间</th>
+                <th>状态</th>
+                <th>备注</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for appointment in appointments.items %}
+            <tr>
+                <td>
+                    <a href="{{ url_for('user.house_detail', id=appointment.house.id) }}" class="text-decoration-none">
+                        {{ appointment.house.title }}
+                    </a>
+                </td>
+                <td>
+                    <div>{{ appointment.tenant.username }}</div>
+                    <small class="text-muted">{{ appointment.tenant.email }}</small>
+                </td>
+                <td>
+                    <i class="bi bi-clock"></i>
+                    {{ appointment.appointment_time.strftime('%Y-%m-%d %H:%M') }}
+                </td>
+                <td>
+                    {% if appointment.status == 'pending' %}
+                        <span class="badge bg-warning">待确认</span>
+                    {% elif appointment.status == 'confirmed' %}
+                        <span class="badge bg-success">已确认</span>
+                    {% elif appointment.status == 'completed' %}
+                        <span class="badge bg-info">已完成</span>
+                    {% elif appointment.status == 'cancelled' %}
+                        <span class="badge bg-danger">已取消</span>
+                    {% else %}
+                        <span class="badge bg-secondary">{{ appointment.status }}</span>
+                    {% endif %}
+                </td>
+                <td class="small text-muted">
+                    {{ appointment.remark[:30] + '...' if appointment.remark and appointment.remark|length > 30 else (appointment.remark or '-') }}
+                </td>
+                <td>
+                    {% if appointment.status == 'pending' %}
+                    <form method="POST" action="{{ url_for('lease.confirm_appointment', id=appointment.id) }}" 
+                          style="display: inline;">
+                        <button type="submit" class="btn btn-sm btn-outline-success">
+                            <i class="bi bi-check-circle"></i> 确认
+                        </button>
+                    </form>
+                    <form method="POST" action="{{ url_for('lease.cancel_appointment', id=appointment.id) }}" 
+                          style="display: inline;"
+                          onsubmit="return confirm('确定要拒绝这个预约吗？')">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-x-circle"></i> 拒绝
+                        </button>
+                    </form>
+                    {% elif appointment.status == 'confirmed' %}
+                    <form method="POST" action="{{ url_for('lease.complete_appointment', id=appointment.id) }}" 
+                          style="display: inline;">
+                        <button type="submit" class="btn btn-sm btn-outline-info">
+                            <i class="bi bi-check-all"></i> 完成
+                        </button>
+                    </form>
+                    <form method="POST" action="{{ url_for('lease.cancel_appointment', id=appointment.id) }}" 
+                          style="display: inline;"
+                          onsubmit="return confirm('确定要取消这个预约吗？')">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-x-circle"></i> 取消
+                        </button>
+                    </form>
+                    {% else %}
+                    <span class="text-muted small">-</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- 分页 -->
+{% if appointments.pages > 1 %}
+<nav aria-label="Page navigation">
+    <ul class="pagination justify-content-center">
+        {% if appointments.has_prev %}
+        <li class="page-item">
+            <a class="page-link" 
+               href="{{ url_for('lease.landlord_appointments', page=appointments.prev_num, status=status) }}">
+                上一页
+            </a>
+        </li>
+        {% endif %}
+        
+        {% for page_num in appointments.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+            {% if page_num %}
+                <li class="page-item {% if page_num == appointments.page %}active{% endif %}">
+                    <a class="page-link" 
+                       href="{{ url_for('lease.landlord_appointments', page=page_num, status=status) }}">
+                        {{ page_num }}
+                    </a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">...</span></li>
+            {% endif %}
+        {% endfor %}
+        
+        {% if appointments.has_next %}
+        <li class="page-item">
+            <a class="page-link" 
+               href="{{ url_for('lease.landlord_appointments', page=appointments.next_num, status=status) }}">
+                下一页
+            </a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+{% else %}
+<div class="alert alert-info">
+    <i class="bi bi-info-circle"></i> 目前还没有收到任何看房预约。
+</div>
+{% endif %}
+{% endblock %}

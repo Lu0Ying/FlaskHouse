@@ -1,9 +1,15 @@
 from flask import render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from app import db
 from app.lease import bp
 from app.models import Appointment, LeaseContract, RentPayment, House, User
+
+
+@bp.context_processor
+def utility_processor():
+    """添加工具函数到模板上下文"""
+    return dict(now=datetime.now)
 
 
 @bp.route('/')
@@ -94,7 +100,9 @@ def create_appointment(house_id):
         flash('看房预约已提交，请等待房东确认', 'success')
         return redirect(url_for('lease.my_appointments'))
 
-    return render_template('lease/create_appointment.html', house=house)
+    from datetime import date
+    today = date.today().isoformat()
+    return render_template('lease/create_appointment.html', house=house, today=today)
 
 
 @bp.route('/confirm-appointment/<int:id>', methods=['POST'])
@@ -156,13 +164,19 @@ def contracts():
     elif current_user.is_landlord():
         query = LeaseContract.query.filter_by(landlord_id=current_user.id)
     else:
+        # 租客：显示自己发起的合同
         query = LeaseContract.query.filter_by(tenant_id=current_user.id)
 
     if status:
         query = query.filter_by(status=status)
 
-    contracts = query.order_by(LeaseContract.created_at.desc()).paginate(page=page, per_page=10)
-    return render_template('lease/contracts.html', contracts=contracts)
+    contracts_list = query.order_by(LeaseContract.created_at.desc()).paginate(page=page, per_page=10)
+    
+    # 根据用户角色选择不同的模板
+    if current_user.is_tenant():
+        return render_template('lease/tenant_contracts.html', contracts=contracts_list)
+    else:
+        return render_template('lease/contracts.html', contracts=contracts_list)
 
 
 @bp.route('/create-contract/<int:house_id>', methods=['GET', 'POST'])
@@ -219,51 +233,240 @@ def create_contract(house_id):
     return render_template('lease/create_contract.html', house=house, tenants=tenants)
 
 
+@bp.route('/create-contract-tenant', methods=['GET', 'POST'])
+@bp.route('/create-contract-tenant/<int:house_id>', methods=['GET', 'POST'])
+@login_required
+def create_contract_tenant(house_id=None):
+    """租客发起租赁合同"""
+    if not current_user.is_tenant():
+        flash('只有租客可以发起合同', 'danger')
+        return redirect(url_for('lease.contracts'))
+
+    preselected_house = None
+    if house_id:
+        preselected_house = House.query.get_or_404(house_id)
+        # 检查房源是否可用
+        if preselected_house.status != 'available':
+            flash('该房源暂不可租', 'warning')
+            return redirect(url_for('house.detail', id=house_id))
+
+    if request.method == 'POST':
+        house_id = request.form.get('house_id', type=int)
+        start_date = request.form.get('start_date')
+        duration_months = request.form.get('duration_months', type=int)
+        rent_amount = request.form.get('rent_amount', type=float)
+        deposit_amount = request.form.get('deposit_amount', type=float)
+        payment_method = request.form.get('payment_method', 'monthly')
+
+        # 验证房源
+        house = House.query.get_or_404(house_id)
+        
+        # 检查房源是否已被租出
+        if house.status == 'rented':
+            flash('该房源已被租出', 'danger')
+            return redirect(url_for('lease.create_contract_tenant'))
+
+        # 计算结束日期（按月）
+        try:
+            start = datetime.strptime(start_date, '%Y-%m-%d').date()
+            # 计算结束年份和月份
+            end_year = start.year + (start.month + duration_months - 1) // 12
+            end_month = (start.month + duration_months - 1) % 12 + 1
+            
+            # 处理月末日期问题
+            import calendar
+            last_day = calendar.monthrange(end_year, end_month)[1]
+            end_day = min(start.day, last_day)
+            
+            end = date(end_year, end_month, end_day)
+        except (ValueError, TypeError):
+            flash('日期格式不正确', 'danger')
+            return redirect(url_for('lease.create_contract_tenant'))
+
+        if start < date.today():
+            flash('开始日期不能早于今天', 'danger')
+            return redirect(url_for('lease.create_contract_tenant'))
+
+        # 创建合同
+        contract = LeaseContract(
+            house_id=house_id,
+            tenant_id=current_user.id,
+            landlord_id=house.landlord_id,
+            start_date=start,
+            end_date=end,
+            rent_amount=rent_amount,
+            deposit_amount=deposit_amount,
+            payment_method=payment_method,
+            status='pending'
+        )
+        db.session.add(contract)
+        db.session.commit()
+
+        flash('合同申请已提交，请等待房东审批', 'success')
+        return redirect(url_for('lease.contracts'))
+
+    # GET请求：显示可租赁的房源列表
+    houses = House.query.filter_by(status='available').all()
+    today = date.today().isoformat()
+    return render_template('lease/create_contract_tenant.html', 
+                          houses=houses, 
+                          today=today, 
+                          preselected_house=preselected_house)
+
+
+@bp.route('/approve-contract/<int:id>', methods=['POST'])
+@login_required
+def approve_contract(id):
+    """房东同意合同"""
+    contract = LeaseContract.query.get_or_404(id)
+
+    if not current_user.is_landlord() or current_user.id != contract.landlord_id:
+        flash('无权操作', 'danger')
+        return redirect(url_for('lease.contracts'))
+
+    if contract.status != 'pending':
+        flash('合同状态不允许审批', 'danger')
+        return redirect(url_for('lease.contracts'))
+
+    # 更新合同状态为生效
+    contract.status = 'active'
+    
+    # 更新房源状态为已租
+    house = House.query.get(contract.house_id)
+    house.status = 'rented'
+    
+    # 自动生成租金支付记录（账单）
+    next_due = contract.start_date
+    payment_count = 0
+    
+    while next_due < contract.end_date:
+        # 根据支付方式计算下次付款日期
+        if contract.payment_method == 'monthly':
+            month = next_due.month + 1
+            year = next_due.year
+            if month > 12:
+                month = 1
+                year += 1
+            # 处理月末日期问题
+            import calendar
+            max_day = calendar.monthrange(year, month)[1]
+            day = min(next_due.day, max_day)
+            next_due = datetime(year, month, day).date()
+        elif contract.payment_method == 'quarterly':
+            month = next_due.month + 3
+            year = next_due.year
+            if month > 12:
+                month -= 12
+                year += 1
+            import calendar
+            max_day = calendar.monthrange(year, month)[1]
+            day = min(next_due.day, max_day)
+            next_due = datetime(year, month, day).date()
+        elif contract.payment_method == 'yearly':
+            year = next_due.year + 1
+            import calendar
+            max_day = calendar.monthrange(year, next_due.month)[1]
+            day = min(next_due.day, max_day)
+            next_due = datetime(year, next_due.month, day).date()
+        else:
+            # 默认按月
+            month = next_due.month + 1
+            year = next_due.year
+            if month > 12:
+                month = 1
+                year += 1
+            import calendar
+            max_day = calendar.monthrange(year, month)[1]
+            day = min(next_due.day, max_day)
+            next_due = datetime(year, month, day).date()
+        
+        # 如果下次付款日期在合同有效期内，创建账单
+        if next_due < contract.end_date:
+            payment = RentPayment(
+                contract_id=contract.id,
+                amount=contract.rent_amount,
+                due_date=next_due,
+                status='unpaid'
+            )
+            db.session.add(payment)
+            payment_count += 1
+    
+    db.session.commit()
+
+    flash(f'已同意出租请求，合同已生效，已生成 {payment_count} 期租金账单', 'success')
+    return redirect(url_for('lease.contracts'))
+
+
+@bp.route('/reject-contract/<int:id>', methods=['POST'])
+@login_required
+def reject_contract(id):
+    """房东拒绝合同"""
+    contract = LeaseContract.query.get_or_404(id)
+
+    if not current_user.is_landlord() or current_user.id != contract.landlord_id:
+        flash('无权操作', 'danger')
+        return redirect(url_for('lease.contracts'))
+
+    if contract.status != 'pending':
+        flash('合同状态不允许审批', 'danger')
+        return redirect(url_for('lease.contracts'))
+
+    # 将合同状态标记为被拒
+    contract.status = 'rejected'
+    db.session.commit()
+
+    flash('已拒绝出租请求', 'success')
+    return redirect(url_for('lease.contracts'))
+
+
+@bp.route('/cancel-contract/<int:id>', methods=['POST'])
+@login_required
+def cancel_contract(id):
+    """租客取消合同申请"""
+    contract = LeaseContract.query.get_or_404(id)
+
+    if not current_user.is_tenant() or current_user.id != contract.tenant_id:
+        flash('无权操作', 'danger')
+        return redirect(url_for('lease.contracts'))
+
+    if contract.status != 'pending':
+        flash('只能取消待审批的合同', 'danger')
+        return redirect(url_for('lease.contracts'))
+
+    db.session.delete(contract)
+    db.session.commit()
+
+    flash('已取消合同申请', 'success')
+    return redirect(url_for('lease.contracts'))
+
+
 @bp.route('/sign-contract/<int:id>', methods=['POST'])
 @login_required
 def sign_contract(id):
+    """租客签署合同（保留用于兼容旧流程）"""
     contract = LeaseContract.query.get_or_404(id)
 
     if current_user.id not in [contract.tenant_id, contract.landlord_id]:
         flash('无权签署此合同', 'danger')
         return redirect(url_for('lease.contracts'))
 
-    if contract.status not in ['pending']:
+    if contract.status != 'pending':
         flash('此合同状态不允许签署', 'danger')
         return redirect(url_for('lease.contracts'))
 
-    if current_user.is_tenant() and contract.status == 'pending':
+    # 如果是租客签署，需要房东审批
+    if current_user.is_tenant():
+        flash('合同已提交，请等待房东审批', 'success')
+        return redirect(url_for('lease.contracts'))
+    
+    # 如果是房东签署（同意），直接生效
+    if current_user.is_landlord():
         contract.status = 'active'
         house = House.query.get(contract.house_id)
         house.status = 'rented'
         db.session.commit()
-
-        next_due = contract.start_date
-        while next_due < contract.end_date:
-            if contract.payment_method == 'monthly':
-                next_due = datetime(next_due.year, next_due.month + 1 if next_due.month < 12 else 1,
-                                   next_due.day if next_due.month < 12 else 1).date()
-                if next_due.month == 1 and next_due.day > 28:
-                    next_due = datetime(next_due.year + 1, 1, 1).date()
-            elif contract.payment_method == 'quarterly':
-                next_due = datetime(next_due.year, next_due.month + 3 if next_due.month < 10 else 1,
-                                   next_due.day if next_due.month < 10 else 1).date()
-            else:
-                next_due = contract.end_date
-
-            if next_due < contract.end_date:
-                payment = RentPayment(
-                    contract_id=contract.id,
-                    amount=contract.rent_amount,
-                    due_date=next_due,
-                    status='unpaid'
-                )
-                db.session.add(payment)
-
-        db.session.commit()
         flash('合同签署成功，已生效', 'success')
-
-    return redirect(url_for('lease.contracts'))
+        return redirect(url_for('lease.contracts'))
 
 
 @bp.route('/terminate-contract/<int:id>', methods=['POST'])

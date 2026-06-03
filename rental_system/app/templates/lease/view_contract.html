@@ -1,0 +1,284 @@
+{% extends "base.html" %}
+{% block title %}合同详情{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="bi bi-file-text"></i> 租赁合同详情</h5>
+            </div>
+            <div class="card-body">
+                <!-- 房源信息 -->
+                <div class="mb-4">
+                    <h6 class="border-bottom pb-2">房源信息</h6>
+                    <div class="row mb-2">
+                        <div class="col-md-3 text-muted">房源标题：</div>
+                        <div class="col-md-9">{{ contract.house.title }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-3 text-muted">地址：</div>
+                        <div class="col-md-9">{{ contract.house.address }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-3 text-muted">房屋类型：</div>
+                        <div class="col-md-9">{{ contract.house.type or '未填写' }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-3 text-muted">户型：</div>
+                        <div class="col-md-9">{{ contract.house.room_count or '未填写' }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-3 text-muted">面积：</div>
+                        <div class="col-md-9">{{ contract.house.size }}㎡</div>
+                    </div>
+                </div>
+
+                <!-- 租客信息 -->
+                <div class="mb-4">
+                    <h6 class="border-bottom pb-2">租客信息</h6>
+                    <div class="row mb-2">
+                        <div class="col-md-3 text-muted">用户名：</div>
+                        <div class="col-md-9">{{ contract.tenant.username }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-3 text-muted">邮箱：</div>
+                        <div class="col-md-9">{{ contract.tenant.email }}</div>
+                    </div>
+                    {% if contract.tenant.phone %}
+                    <div class="row mb-2">
+                        <div class="col-md-3 text-muted">电话：</div>
+                        <div class="col-md-9">{{ contract.tenant.phone }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- 租赁条款 -->
+                <div class="mb-4">
+                    <h6 class="border-bottom pb-2">租赁条款</h6>
+                    <div class="row mb-2">
+                        <div class="col-md-3 text-muted">开始日期：</div>
+                        <div class="col-md-9">{{ contract.start_date.strftime('%Y-%m-%d') }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-3 text-muted">结束日期：</div>
+                        <div class="col-md-9">{{ contract.end_date.strftime('%Y-%m-%d') }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-3 text-muted">租期时长：</div>
+                        <div class="col-md-9">
+                            {% set months = ((contract.end_date.year - contract.start_date.year) * 12 + contract.end_date.month - contract.start_date.month) %}
+                            {{ months }} 个月
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-3 text-muted">月租金：</div>
+                        <div class="col-md-9">¥{{ contract.rent_amount }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-3 text-muted">押金：</div>
+                        <div class="col-md-9">¥{{ contract.deposit_amount }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-3 text-muted">支付方式：</div>
+                        <div class="col-md-9">
+                            {% if contract.payment_method == 'monthly' %}按月支付
+                            {% elif contract.payment_method == 'quarterly' %}按季支付
+                            {% elif contract.payment_method == 'yearly' %}按年支付
+                            {% else %}{{ contract.payment_method }}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 合同状态 -->
+                <div class="mb-4">
+                    <h6 class="border-bottom pb-2">合同状态</h6>
+                    <div class="row mb-2">
+                        <div class="col-md-3 text-muted">当前状态：</div>
+                        <div class="col-md-9">
+                            {% if contract.status == 'active' %}
+                            <span class="badge bg-success">生效中</span>
+                            {% elif contract.status == 'pending' %}
+                            <span class="badge bg-warning">待审批</span>
+                            {% elif contract.status == 'rejected' %}
+                            <span class="badge bg-danger">被拒</span>
+                            {% elif contract.status == 'terminated' %}
+                            <span class="badge bg-secondary">已终止</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ contract.status }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-3 text-muted">创建时间：</div>
+                        <div class="col-md-9">{{ contract.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</div>
+                    </div>
+                </div>
+
+                <!-- 操作按钮区域 -->
+                {% if current_user.is_landlord() and current_user.id == contract.landlord_id and contract.status == 'pending' %}
+                <hr>
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> 
+                    <strong>请仔细审核以上租赁申请信息</strong><br>
+                    勾选同意租赁条款后，您可以点击"同意"按钮批准此申请。批准后合同将生效，房源状态将变为"已租"。
+                </div>
+                
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="agree_terms" required>
+                        <label class="form-check-label" for="agree_terms">
+                            我已仔细阅读并同意<a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">租赁条款</a>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('lease.contracts') }}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> 返回列表
+                    </a>
+                    <div>
+                        <form action="{{ url_for('lease.reject_contract', id=contract.id) }}" method="POST" class="d-inline">
+                            <button type="submit" class="btn btn-danger" onclick="return confirm('确定拒绝此出租请求？')">
+                                <i class="bi bi-x-circle"></i> 拒绝
+                            </button>
+                        </form>
+                        <form action="{{ url_for('lease.approve_contract', id=contract.id) }}" method="POST" class="d-inline ms-2">
+                            <button type="submit" class="btn btn-success" id="approveBtn" disabled onclick="return confirm('确定同意此出租请求？同意后合同将生效。')">
+                                <i class="bi bi-check-circle"></i> 同意
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% elif contract.status == 'rejected' %}
+                <hr>
+                <div class="alert alert-danger">
+                    <i class="bi bi-x-circle"></i> 
+                    <strong>此合同已被拒绝</strong><br>
+                    该租赁申请已被房东拒绝，无法继续执行。
+                </div>
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{{ url_for('lease.contracts') }}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> 返回列表
+                    </a>
+                </div>
+                {% else %}
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{{ url_for('lease.contracts') }}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> 返回列表
+                    </a>
+                    {% if contract.status == 'active' and (current_user.is_admin() or current_user.id == contract.landlord_id or current_user.id == contract.tenant_id) %}
+                    <form action="{{ url_for('lease.terminate_contract', id=contract.id) }}" method="POST" class="d-inline">
+                        <button type="submit" class="btn btn-outline-danger" onclick="return confirm('确定终止此合同？')">
+                            <i class="bi bi-x-circle"></i> 终止合同
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6><i class="bi bi-lightbulb"></i> 温馨提示</h6>
+            </div>
+            <div class="card-body">
+                {% if current_user.is_landlord() and contract.status == 'pending' %}
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle-fill text-success"></i> 
+                        仔细核对租客信息
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle-fill text-success"></i> 
+                        确认租赁条款无误
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle-fill text-success"></i> 
+                        勾选同意条款后点击"同意"
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle-fill text-success"></i> 
+                        同意后合同立即生效
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle-fill text-success"></i> 
+                        房源状态自动更新为"已租"
+                    </li>
+                </ul>
+                {% else %}
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <i class="bi bi-info-circle-fill text-primary"></i> 
+                        这是只读视图，无法修改信息
+                    </li>
+                    {% if contract.status == 'active' %}
+                    <li class="mb-2">
+                        <i class="bi bi-info-circle-fill text-primary"></i> 
+                        合同生效中可以终止
+                    </li>
+                    {% endif %}
+                </ul>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 合同条款模态框 -->
+<div class="modal fade" id="termsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">租赁合同条款</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <h6>第一条 房屋基本情况</h6>
+                <p>甲方（出租方）将位于指定地址的房屋出租给乙方（承租方）使用。</p>
+                
+                <h6>第二条 租赁期限</h6>
+                <p>租赁期限自合同约定的开始日期起至结束日期止。</p>
+                
+                <h6>第三条 租金及支付方式</h6>
+                <p>乙方应按合同约定的金额和支付方式向甲方支付租金。</p>
+                
+                <h6>第四条 押金</h6>
+                <p>乙方应向甲方支付押金，合同终止时如无违约情况，甲方应全额退还押金。</p>
+                
+                <h6>第五条 房屋使用</h6>
+                <p>乙方应合理使用房屋及其设施，不得擅自改变房屋结构或用途。</p>
+                
+                <h6>第六条 维修责任</h6>
+                <p>房屋及设施的自然损坏由甲方负责维修，人为损坏由乙方负责。</p>
+                
+                <h6>第七条 违约责任</h6>
+                <p>任何一方违反合同约定，应承担相应的违约责任。</p>
+                
+                <h6>第八条 合同解除</h6>
+                <p>经双方协商一致，可以解除本合同。</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">我已了解</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 监听复选框状态，控制同意按钮的启用/禁用
+document.addEventListener('DOMContentLoaded', function() {
+    const agreeCheckbox = document.getElementById('agree_terms');
+    const approveBtn = document.getElementById('approveBtn');
+    
+    if (agreeCheckbox && approveBtn) {
+        agreeCheckbox.addEventListener('change', function() {
+            approveBtn.disabled = !this.checked;
+        });
+    }
+});
+</script>
+{% endblock %}
