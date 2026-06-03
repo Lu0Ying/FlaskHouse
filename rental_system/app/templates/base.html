@@ -30,9 +30,15 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
+                    {% if current_user.is_authenticated and current_user.is_landlord() %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('user.my_houses') }}">我的房源</a>
+                    </li>
+                    {% else %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('house.index') }}">房源列表</a>
                     </li>
+                    {% endif %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('search.index') }}">智能搜索</a>
                     </li>

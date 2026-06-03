@@ -226,7 +226,9 @@ class RentPayment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     contract_id = db.Column(db.Integer, db.ForeignKey('lease_contracts.id'), nullable=False, index=True)
     amount = db.Column(db.Float, nullable=False)
-    due_date = db.Column(db.Date, nullable=False)
+    start_date = db.Column(db.Date)  # 账单周期起始日期
+    end_date = db.Column(db.Date)  # 账单周期截止日期
+    due_date = db.Column(db.Date, nullable=False)  # 付款到期日
     paid_date = db.Column(db.Date)
     status = db.Column(db.String(20), default='unpaid')  # unpaid/paid/overdue
     payment_method = db.Column(db.String(50))  # alipay/wechat/bank

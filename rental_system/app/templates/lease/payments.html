@@ -31,6 +31,7 @@
                         <th>账单编号</th>
                         <th>房源信息</th>
                         <th>租客</th>
+                        <th>账单周期</th>
                         <th>金额</th>
                         <th>到期日期</th>
                         <th>支付状态</th>
@@ -51,6 +52,14 @@
                             {{ payment.contract.tenant.username }}
                             {% if payment.contract.tenant.phone %}
                             <p class="text-muted small">{{ payment.contract.tenant.phone }}</p>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if payment.start_date and payment.end_date %}
+                            {{ payment.start_date.strftime('%Y-%m-%d') }}<br>
+                            <span class="text-muted small">至 {{ payment.end_date.strftime('%Y-%m-%d') }}</span>
+                            {% else %}
+                            <span class="text-muted">-</span>
                             {% endif %}
                         </td>
                         <td>¥{{ payment.amount }}</td>
@@ -84,6 +93,12 @@
                                         data-house-address="{{ payment.contract.house.address }}"
                                         data-amount="{{ payment.amount }}"
                                         data-due-date="{{ payment.due_date.strftime('%Y-%m-%d') }}"
+                                        {% if payment.start_date %}
+                                        data-payment-start="{{ payment.start_date.strftime('%Y-%m-%d') }}"
+                                        {% endif %}
+                                        {% if payment.end_date %}
+                                        data-payment-end="{{ payment.end_date.strftime('%Y-%m-%d') }}"
+                                        {% endif %}
                                         data-contract-start="{{ payment.contract.start_date.strftime('%Y-%m-%d') }}"
                                         data-contract-end="{{ payment.contract.end_date.strftime('%Y-%m-%d') }}">
                                     <i class="bi bi-credit-card"></i> 支付
@@ -101,7 +116,7 @@
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="7" class="text-center text-muted">暂无租金账单</td>
+                        <td colspan="8" class="text-center text-muted">暂无租金账单</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -158,6 +173,7 @@
                 <div class="card mb-3">
                     <div class="card-body">
                         <h6 class="card-subtitle mb-2 text-muted">支付信息</h6>
+                        <p class="mb-1"><strong>账单周期：</strong><span id="modalPaymentStart"></span> 至 <span id="modalPaymentEnd"></span></p>
                         <p class="mb-1"><strong>应付金额：</strong><span class="text-danger h5">¥<span id="modalAmount"></span></span></p>
                         <p class="mb-1"><strong>账单到期日：</strong><span id="modalDueDate"></span></p>
                     </div>
@@ -200,6 +216,8 @@ document.addEventListener('DOMContentLoaded', function() {
             var houseAddress = button.getAttribute('data-house-address');
             var amount = button.getAttribute('data-amount');
             var dueDate = button.getAttribute('data-due-date');
+            var paymentStart = button.getAttribute('data-payment-start');
+            var paymentEnd = button.getAttribute('data-payment-end');
             var contractStart = button.getAttribute('data-contract-start');
             var contractEnd = button.getAttribute('data-contract-end');
             
@@ -208,6 +226,16 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('modalHouseAddress').textContent = houseAddress;
             document.getElementById('modalAmount').textContent = amount;
             document.getElementById('modalDueDate').textContent = dueDate;
+            
+            // 设置账单周期，如果没有则显示合同期限
+            if (paymentStart && paymentEnd) {
+                document.getElementById('modalPaymentStart').textContent = paymentStart;
+                document.getElementById('modalPaymentEnd').textContent = paymentEnd;
+            } else {
+                document.getElementById('modalPaymentStart').textContent = contractStart;
+                document.getElementById('modalPaymentEnd').textContent = contractEnd;
+            }
+            
             document.getElementById('modalContractStart').textContent = contractStart;
             document.getElementById('modalContractEnd').textContent = contractEnd;
             

@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, date
 from app import db
 from app.lease import bp
 from app.models import Appointment, LeaseContract, RentPayment, House, User
+from app.utils.contract import generate_rent_payments
 
 
 @bp.context_processor
@@ -336,60 +337,13 @@ def approve_contract(id):
     house.status = 'rented'
     
     # 自动生成租金支付记录（账单）
-    next_due = contract.start_date
+    payments_data = generate_rent_payments(contract)
     payment_count = 0
     
-    while next_due < contract.end_date:
-        # 根据支付方式计算下次付款日期
-        if contract.payment_method == 'monthly':
-            month = next_due.month + 1
-            year = next_due.year
-            if month > 12:
-                month = 1
-                year += 1
-            # 处理月末日期问题
-            import calendar
-            max_day = calendar.monthrange(year, month)[1]
-            day = min(next_due.day, max_day)
-            next_due = datetime(year, month, day).date()
-        elif contract.payment_method == 'quarterly':
-            month = next_due.month + 3
-            year = next_due.year
-            if month > 12:
-                month -= 12
-                year += 1
-            import calendar
-            max_day = calendar.monthrange(year, month)[1]
-            day = min(next_due.day, max_day)
-            next_due = datetime(year, month, day).date()
-        elif contract.payment_method == 'yearly':
-            year = next_due.year + 1
-            import calendar
-            max_day = calendar.monthrange(year, next_due.month)[1]
-            day = min(next_due.day, max_day)
-            next_due = datetime(year, next_due.month, day).date()
-        else:
-            # 默认按月
-            month = next_due.month + 1
-            year = next_due.year
-            if month > 12:
-                month = 1
-                year += 1
-            import calendar
-            max_day = calendar.monthrange(year, month)[1]
-            day = min(next_due.day, max_day)
-            next_due = datetime(year, month, day).date()
-        
-        # 如果下次付款日期在合同有效期内，创建账单
-        if next_due < contract.end_date:
-            payment = RentPayment(
-                contract_id=contract.id,
-                amount=contract.rent_amount,
-                due_date=next_due,
-                status='unpaid'
-            )
-            db.session.add(payment)
-            payment_count += 1
+    for payment_data in payments_data:
+        payment = RentPayment(**payment_data)
+        db.session.add(payment)
+        payment_count += 1
     
     db.session.commit()
 
@@ -478,12 +432,25 @@ def terminate_contract(id):
         flash('无权终止此合同', 'danger')
         return redirect(url_for('lease.contracts'))
 
+    # 获取当前日期
+    today = date.today()
+    
+    # 删除未开始的租金账单（start_date > today）
+    deleted_count = 0
+    for payment in contract.payments:
+        if payment.start_date and payment.start_date > today:
+            db.session.delete(payment)
+            deleted_count += 1
+
     contract.status = 'terminated'
     house = House.query.get(contract.house_id)
     house.status = 'available'
     db.session.commit()
 
-    flash('合同已终止', 'success')
+    if deleted_count > 0:
+        flash(f'合同已终止，已删除 {deleted_count} 个未开始的租金账单', 'success')
+    else:
+        flash('合同已终止', 'success')
     return redirect(url_for('lease.contracts'))
 
 
@@ -504,6 +471,7 @@ def view_contract(id):
 def payments():
     page = request.args.get('page', 1, type=int)
     status = request.args.get('status', '')
+    today = date.today()
 
     if current_user.is_admin():
         query = RentPayment.query
@@ -513,6 +481,9 @@ def payments():
     else:
         contract_ids = [c.id for c in LeaseContract.query.filter_by(tenant_id=current_user.id).all()]
         query = RentPayment.query.filter(RentPayment.contract_id.in_(contract_ids))
+
+    # 只显示当前日期大于等于账单起始日期的项（或没有起始日期的旧数据）
+    query = query.filter((RentPayment.start_date <= today) | (RentPayment.start_date.is_(None)))
 
     if status:
         query = query.filter_by(status=status)
@@ -576,35 +547,11 @@ def generate_payments(contract_id):
         flash('账单已存在，如需重新生成请先删除现有账单', 'warning')
         return redirect(url_for('lease.view_contract', id=contract_id))
 
-    next_due = contract.start_date
-    while next_due < contract.end_date:
-        if contract.payment_method == 'monthly':
-            month = next_due.month + 1
-            year = next_due.year
-            if month > 12:
-                month = 1
-                year += 1
-            day = min(next_due.day, [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1])
-            next_due = datetime(year, month, day).date()
-        elif contract.payment_method == 'quarterly':
-            month = next_due.month + 3
-            year = next_due.year
-            if month > 12:
-                month -= 12
-                year += 1
-            day = min(next_due.day, [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1])
-            next_due = datetime(year, month, day).date()
-        else:
-            next_due = contract.end_date
-
-        if next_due < contract.end_date:
-            payment = RentPayment(
-                contract_id=contract.id,
-                amount=contract.rent_amount,
-                due_date=next_due,
-                status='unpaid'
-            )
-            db.session.add(payment)
+    payments_data = generate_rent_payments(contract)
+    
+    for payment_data in payments_data:
+        payment = RentPayment(**payment_data)
+        db.session.add(payment)
 
     db.session.commit()
     flash('账单已生成', 'success')

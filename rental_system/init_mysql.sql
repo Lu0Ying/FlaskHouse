@@ -122,6 +122,8 @@ CREATE TABLE rent_payments (
     id INT PRIMARY KEY AUTO_INCREMENT COMMENT '支付ID',
     contract_id INT NOT NULL COMMENT '合同ID',
     amount FLOAT NOT NULL COMMENT '支付金额',
+    start_date DATE COMMENT '账单周期起始日期',
+    end_date DATE COMMENT '账单周期结束日期',
     due_date DATE NOT NULL COMMENT '应缴日期',
     paid_date DATE COMMENT '实缴日期',
     status VARCHAR(20) DEFAULT 'unpaid' COMMENT '状态: unpaid/paid/overdue',

@@ -47,7 +47,7 @@ CREATE TABLE `appointments` (
 
 LOCK TABLES `appointments` WRITE;
 /*!40000 ALTER TABLE `appointments` DISABLE KEYS */;
-INSERT INTO `appointments` VALUES (1,3,3,2,'2026-06-06 14:00:00','completed','','2026-06-03 05:41:21'),(2,8,3,2,'2026-06-03 16:00:00','confirmed','','2026-06-03 05:45:15');
+INSERT INTO `appointments` VALUES (1,3,3,2,'2026-06-06 14:00:00','completed','','2026-06-03 05:41:21'),(2,8,3,2,'2026-06-03 16:00:00','cancelled','','2026-06-03 05:45:15');
 /*!40000 ALTER TABLE `appointments` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -160,7 +160,7 @@ CREATE TABLE `houses` (
 
 LOCK TABLES `houses` WRITE;
 /*!40000 ALTER TABLE `houses` DISABLE KEYS */;
-INSERT INTO `houses` VALUES (1,2,'CBD核心精装两居','北京市朝阳区建国路88号SOHO现代城','朝阳区','CBD','公寓','2室1厅',85.5,5500,11000,'精装','位于CBD核心区域，地铁1号线大望路站步行5分钟，周边配套齐全，拎包入住。','available',NULL,NULL,'110000','110100','110105','2026-05-31 16:23:54','2026-06-03 07:55:03'),(2,2,'中关村学区三居室','北京市海淀区中关村大街1号科技大厦','110108','','住宅','3室2厅',120,8000,16000,'简装','学区房，临近中关村一小，地铁4号线中关村站步行3分钟，适合家庭居住。','rented',NULL,NULL,'110000','110100','110108','2026-05-31 16:23:54','2026-06-03 07:45:25'),(3,2,'王府井精装一居','北京市东城区王府井大街10号乐天银泰','110101','','公寓','1室1厅',55,4200,8400,'精装','繁华商业区，购物便利，地铁1号线王府井站直达。','available',NULL,NULL,'110000','110100','110101','2026-05-31 16:23:54','2026-06-02 15:38:46'),(4,2,'金融街舒适两居','北京市西城区金融街20号国际企业大厦','西城区','金融街','住宅','2室1厅',78,6200,12400,'精装','金融中心地段，办公便利，生活配套完善，临近地铁2号线。','available',NULL,NULL,'110000','110100','110102','2026-05-31 16:23:54','2026-05-31 16:23:54'),(5,2,'方庄成熟社区大三居','北京市丰台区方庄路15号芳城园','丰台区','方庄','住宅','3室2厅',135,7500,15000,'精装','成熟社区，配套齐全，临近方庄购物中心，适合大家庭居住。','available',NULL,NULL,'110000','110100','110106','2026-05-31 16:23:54','2026-06-03 07:42:58'),(6,2,'古城Loft公寓','北京市石景山区古城路8号绿地环球金融城','石景山区','古城','loft','1室1厅',45,3800,7600,'简装','Loft户型，挑高4.5米，适合年轻人居住，地铁1号线古城站直达。','available',NULL,NULL,'110000','110100','110107','2026-05-31 16:23:54','2026-05-31 16:23:54'),(7,2,'朝阳公园旁精装公寓','北京市朝阳区朝阳公园路19号棕榈泉国际公寓','朝阳区','朝阳公园','公寓','2室2厅',95,6800,13600,'精装','紧邻朝阳公园，环境优美，空气清新，高端社区配套。','available',NULL,NULL,'110000','110100','110105','2026-05-31 16:23:54','2026-05-31 16:23:54'),(8,2,'五道口精装三居室','北京市海淀区成府路28号华清嘉园','海淀区','五道口','住宅','3室1厅',105,7200,14400,'简装','高校云集，学术氛围浓厚，地铁13号线五道口站步行5分钟。','available',NULL,NULL,'110000','110100','110108','2026-05-31 16:23:54','2026-05-31 16:23:54'),(9,2,'望京SOHO附近公寓','北京市朝阳区望京街9号望京SOHO','朝阳区','望京','公寓','1室1厅',48,4500,9000,'精装','望京商圈核心，办公居住两相宜，地铁14号线望京南站直达。','available',NULL,NULL,'110000','110100','110105','2026-05-31 16:23:54','2026-05-31 16:23:54'),(10,2,'通州核心精装四居','北京市通州区新华大街50号万达公寓','通州区','通州城区','住宅','4室2厅',168,9500,19000,'精装','大型社区，配套完善，临近万达广场，适合多孩家庭。','available',NULL,NULL,'110000','110100','110112','2026-05-31 16:23:54','2026-05-31 16:23:54');
+INSERT INTO `houses` VALUES (1,2,'CBD核心精装两居','北京市朝阳区建国路88号SOHO现代城','朝阳区','CBD','公寓','2室1厅',85.5,5500,11000,'精装','位于CBD核心区域，地铁1号线大望路站步行5分钟，周边配套齐全，拎包入住。','available',NULL,NULL,'110000','110100','110105','2026-05-31 16:23:54','2026-06-03 14:52:49'),(2,2,'中关村学区三居室','北京市海淀区中关村大街1号科技大厦','110108','','住宅','3室2厅',120,8000,16000,'简装','学区房，临近中关村一小，地铁4号线中关村站步行3分钟，适合家庭居住。','available',NULL,NULL,'110000','110100','110108','2026-05-31 16:23:54','2026-06-03 13:37:38'),(3,2,'王府井精装一居','北京市东城区王府井大街10号乐天银泰','东城区','','公寓','1室1厅',55,4200,8400,'精装','繁华商业区，购物便利，地铁1号线王府井站直达。','available',NULL,NULL,'110000','110100','110101','2026-05-31 16:23:54','2026-06-02 15:38:46'),(4,2,'金融街舒适两居','北京市西城区金融街20号国际企业大厦','西城区','金融街','住宅','2室1厅',78,6200,12400,'精装','金融中心地段，办公便利，生活配套完善，临近地铁2号线。','available',NULL,NULL,'110000','110100','110102','2026-05-31 16:23:54','2026-05-31 16:23:54'),(5,2,'方庄成熟社区大三居','北京市丰台区方庄路15号芳城园','丰台区','方庄','住宅','3室2厅',135,7500,15000,'精装','成熟社区，配套齐全，临近方庄购物中心，适合大家庭居住。','available',NULL,NULL,'110000','110100','110106','2026-05-31 16:23:54','2026-06-03 13:18:06'),(6,2,'古城Loft公寓','北京市石景山区古城路8号绿地环球金融城','石景山区','古城','loft','1室1厅',45,3800,7600,'简装','Loft户型，挑高4.5米，适合年轻人居住，地铁1号线古城站直达。','available',NULL,NULL,'110000','110100','110107','2026-05-31 16:23:54','2026-05-31 16:23:54'),(7,2,'朝阳公园旁精装公寓','北京市朝阳区朝阳公园路19号棕榈泉国际公寓','朝阳区','朝阳公园','公寓','2室2厅',95,6800,13600,'精装','紧邻朝阳公园，环境优美，空气清新，高端社区配套。','available',NULL,NULL,'110000','110100','110105','2026-05-31 16:23:54','2026-05-31 16:23:54'),(8,5,'五道口精装三居室','北京市海淀区成府路28号华清嘉园','海淀区','五道口','住宅','3室1厅',105,7200,14400,'简装','高校云集，学术氛围浓厚，地铁13号线五道口站步行5分钟。','available',NULL,NULL,'110000','110100','110108','2026-05-31 16:23:54','2026-05-31 16:23:54'),(9,5,'望京SOHO附近公寓','北京市朝阳区望京街9号望京SOHO','朝阳区','望京','公寓','1室1厅',48,4500,9000,'精装','望京商圈核心，办公居住两相宜，地铁14号线望京南站直达。','available',NULL,NULL,'110000','110100','110105','2026-05-31 16:23:54','2026-06-03 12:01:46'),(10,5,'通州核心精装四居','北京市通州区新华大街50号万达公寓','通州区','通州城区','住宅','4室2厅',168,9500,19000,'精装','大型社区，配套完善，临近万达广场，适合多孩家庭。','rented',NULL,NULL,'110000','110100','110112','2026-05-31 16:23:54','2026-06-03 15:27:06');
 /*!40000 ALTER TABLE `houses` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -191,7 +191,7 @@ CREATE TABLE `lease_contracts` (
   CONSTRAINT `lease_contracts_ibfk_1` FOREIGN KEY (`house_id`) REFERENCES `houses` (`id`),
   CONSTRAINT `lease_contracts_ibfk_2` FOREIGN KEY (`tenant_id`) REFERENCES `users` (`id`),
   CONSTRAINT `lease_contracts_ibfk_3` FOREIGN KEY (`landlord_id`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -200,7 +200,7 @@ CREATE TABLE `lease_contracts` (
 
 LOCK TABLES `lease_contracts` WRITE;
 /*!40000 ALTER TABLE `lease_contracts` DISABLE KEYS */;
-INSERT INTO `lease_contracts` VALUES (1,2,3,2,'2026-06-08','2026-06-22',8000,16000,'monthly','terminated',NULL,'2026-06-03 06:16:12'),(3,5,3,2,'2026-07-01','2026-08-05',7500,15000,'monthly','rejected',NULL,'2026-06-03 06:41:07'),(4,5,3,2,'2026-06-08','2026-07-13',7500,15000,'monthly','terminated',NULL,'2026-06-03 07:04:46'),(5,1,3,2,'2026-06-08','2026-07-06',5500,11000,'monthly','terminated',NULL,'2026-06-03 07:41:21'),(6,2,3,2,'2026-06-08','2026-07-06',8000,16000,'monthly','terminated',NULL,'2026-06-03 07:43:38'),(7,2,3,2,'2026-06-08','2026-07-20',8000,16000,'monthly','active',NULL,'2026-06-03 07:44:56');
+INSERT INTO `lease_contracts` VALUES (15,10,3,5,'2026-06-03','2027-01-03',9500,19000,'yearly','active',NULL,'2026-06-03 15:26:25');
 /*!40000 ALTER TABLE `lease_contracts` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -321,10 +321,12 @@ CREATE TABLE `rent_payments` (
   `payment_method` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `transaction_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
+  `start_date` date DEFAULT NULL COMMENT '账单周期起始日期',
+  `end_date` date DEFAULT NULL COMMENT '账单周期结束日期',
   PRIMARY KEY (`id`),
   KEY `ix_rent_payments_contract_id` (`contract_id`),
   CONSTRAINT `rent_payments_ibfk_1` FOREIGN KEY (`contract_id`) REFERENCES `lease_contracts` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -333,7 +335,7 @@ CREATE TABLE `rent_payments` (
 
 LOCK TABLES `rent_payments` WRITE;
 /*!40000 ALTER TABLE `rent_payments` DISABLE KEYS */;
-INSERT INTO `rent_payments` VALUES (1,4,7500,'2026-07-08','2026-06-03','paid','alipay',NULL,'2026-06-03 07:05:34'),(2,7,8000,'2026-07-08','2026-06-03','paid','alipay',NULL,'2026-06-03 07:45:25');
+INSERT INTO `rent_payments` VALUES (17,15,66500,'2026-06-03','2026-06-03','paid','alipay',NULL,'2026-06-03 15:27:06','2026-06-03','2027-01-03');
 /*!40000 ALTER TABLE `rent_payments` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -452,7 +454,7 @@ CREATE TABLE `users` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `ix_users_email` (`email`),
   UNIQUE KEY `ix_users_username` (`username`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -461,7 +463,7 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (1,'admin','pbkdf2:sha256:600000$qG6E2asrbeqUksjY$bcaf9064a190bd97a418d98557a1491f68fea51962697712ad21e0af1bef7ce0','admin@rentalsystem.com',NULL,'admin','系统管理员',NULL,NULL,'active','2026-05-31 16:23:54'),(2,'landlord1','pbkdf2:sha256:600000$M5jSlnqSyDAvzaBN$afa74df3d6e12299d3f7439804acc529c09ddb490ead9823a8c125d84617a65f','landlord@example.com',NULL,'landlord','张房东',NULL,NULL,'active','2026-05-31 16:23:54'),(3,'tenant1','pbkdf2:sha256:600000$OLlVukATx9G6pQ7G$7ac3a1a4663cca65a4134ac30f9050f27af94e77bed7cd53ec2663ab3105afb2','tenant@example.com',NULL,'tenant','李租客',NULL,NULL,'active','2026-05-31 16:23:54');
+INSERT INTO `users` VALUES (1,'admin','pbkdf2:sha256:600000$qG6E2asrbeqUksjY$bcaf9064a190bd97a418d98557a1491f68fea51962697712ad21e0af1bef7ce0','admin@rentalsystem.com',NULL,'admin','系统管理员',NULL,NULL,'active','2026-05-31 16:23:54'),(2,'landlord1','pbkdf2:sha256:600000$M5jSlnqSyDAvzaBN$afa74df3d6e12299d3f7439804acc529c09ddb490ead9823a8c125d84617a65f','landlord@example.com',NULL,'landlord','张房东',NULL,NULL,'active','2026-05-31 16:23:54'),(3,'tenant1','pbkdf2:sha256:600000$OLlVukATx9G6pQ7G$7ac3a1a4663cca65a4134ac30f9050f27af94e77bed7cd53ec2663ab3105afb2','tenant@example.com',NULL,'tenant','李租客',NULL,NULL,'active','2026-05-31 16:23:54'),(4,'tenant2','pbkdf2:sha256:600000$f7EmNAWuXNWt6Lvs$76e3bf74f56eb9ff0e9e9983ee7b5e3d9fc1eeef675efe8a4413a2b1fe0d989a','tenant1@example.com',NULL,'tenant',NULL,NULL,NULL,'active','2026-06-03 14:11:21'),(5,'landlord2','pbkdf2:sha256:600000$g7IdfX5JZI5n3IKW$c1fba3ad0d0e9e6d6ef9f39f5925323fbb336b0435114d0e1d35a43f7f21295a','landlord1@example.com',NULL,'landlord',NULL,NULL,NULL,'active','2026-06-03 14:51:30');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -551,4 +553,4 @@ SET character_set_client = @saved_cs_client;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-06-03 17:37:28
+-- Dump completed on 2026-06-03 23:30:07

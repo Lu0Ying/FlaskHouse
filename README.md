@@ -60,8 +60,10 @@ python run.py
 
 ### 示例用户账户（导入示例数据后可用）
 
-- **房东**: landlord@example.com / landlord123
-- **租客**: tenant@example.com / tenant123
+- **房东1**: landlord@example.com / landlord123
+- **房东2**: landlord1@example.com / landlord123
+- **租客1**: tenant@example.com / tenant123
+- **租客2**: tenant1@example.com / tenant123
 
 ## 房源图片系统
 
