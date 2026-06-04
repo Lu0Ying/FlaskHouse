@@ -5,6 +5,7 @@ from app import db
 from app.user import bp
 from app.models import User, House, LeaseContract, Appointment, RepairRequest, Message
 from app.utils import log_action
+from app.models import User, House, LeaseContract, Appointment, RepairRequest, Message, HouseMedia
 
 
 @bp.route('/')
@@ -119,6 +120,8 @@ def house_detail(id):
     
     return render_template('user/landlord_house_detail.html', 
                           house=house,
+                          images=[m for m in HouseMedia.query.filter_by(house_id=house.id, media_type='image').order_by(HouseMedia.order).all()],
+                          videos=[m for m in HouseMedia.query.filter_by(house_id=house.id, media_type='video').order_by(HouseMedia.order).all()],
                           view_count=view_count,
                           appointment_count=appointment_count,
                           contract_count=contract_count,

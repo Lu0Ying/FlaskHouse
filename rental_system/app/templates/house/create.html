@@ -2,6 +2,69 @@
 
 {% block title %}发布房源 - 房屋租赁系统{% endblock %}
 
+{% block extra_css %}
+<style>
+.upload-zone.dragover {
+    background: #e3f2fd !important;
+    border-color: #0d6efd !important;
+}
+.upload-zone.has-error {
+    border-color: #dc3545 !important;
+    background: #fff5f5 !important;
+}
+.media-preview {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+.media-preview img,
+.media-preview video {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    display: block;
+}
+.media-preview .delete-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 26px;
+    height: 26px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(220,53,69,0.85);
+    color: #fff;
+    font-size: 14px;
+    line-height: 26px;
+    text-align: center;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.media-preview .delete-btn:hover {
+    background: #dc3545;
+}
+.media-preview .video-badge {
+    position: absolute;
+    bottom: 4px;
+    left: 4px;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    font-size: 11px;
+    padding: 1px 6px;
+    border-radius: 4px;
+}
+.media-preview .uploading-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container py-4">
     <div class="row justify-content-center">
@@ -111,6 +174,22 @@
                             <label class="form-label">房源描述</label>
                             <textarea name="description" class="form-control" rows="4"
                                       placeholder="描述房屋的特色、配套设施、交通情况等"></textarea>
+                        </div>
+
+                        <!-- ===== 媒体上传区域 ===== -->
+                        <div class="mb-3">
+                            <label class="form-label">房源照片/视频</label>
+                            <div id="dropZone" class="upload-zone text-center p-4 border border-2 border-dashed rounded"
+                                 style="cursor:pointer; background:#f8f9fa; transition: all 0.3s;">
+                                <i class="bi bi-cloud-upload" style="font-size:2.5rem; color:#6c757d;"></i>
+                                <p class="mt-2 mb-1 text-muted">拖拽文件到此处，或点击选择文件</p>
+                                <p class="small text-muted mb-0">支持 JPG/PNG/GIF/MP4，单文件最大 16MB</p>
+                                <input type="file" id="fileInput" accept="image/*,video/mp4" multiple
+                                       style="display:none;">
+                            </div>
+                            <div id="previewContainer" class="row g-2 mt-2"></div>
+                            <input type="hidden" name="media_paths" id="mediaPaths" value="[]">
+                            <div id="uploadError" class="text-danger small mt-1" style="display:none;"></div>
                         </div>
 
                         <div class="d-grid gap-2">
@@ -262,6 +341,224 @@ document.getElementById('houseForm').addEventListener('submit', function(e) {
 
     return true;
 });
+
+// ==================== 媒体上传模块 ====================
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const previewContainer = document.getElementById('previewContainer');
+const mediaPaths = document.getElementById('mediaPaths');
+const uploadError = document.getElementById('uploadError');
+const MAX_FILES = 15;
+const MAX_IMAGES = 10;
+const MAX_VIDEOS = 3;
+const CHUNK_SIZE = 2 * 1024 * 1024;      // 分块大小 2MB
+const MAX_FILE_SIZE = 500 * 1024 * 1024;  // 单文件最大 500MB
+
+// 点击上传区域触发文件选择
+dropZone.addEventListener('click', () => fileInput.click());
+
+// 文件选择后处理
+fileInput.addEventListener('change', function() {
+    handleFiles(this.files);
+    this.value = '';
+});
+
+// 拖拽事件
+dropZone.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    this.classList.add('dragover');
+});
+dropZone.addEventListener('dragleave', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    this.classList.remove('dragover');
+});
+dropZone.addEventListener('drop', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    this.classList.remove('dragover');
+    if (e.dataTransfer.files.length) {
+        handleFiles(e.dataTransfer.files);
+    }
+});
+
+function handleFiles(files) {
+    const currentPaths = JSON.parse(mediaPaths.value || '[]');
+    let imgCount = currentPaths.filter(p => !p.endsWith('.mp4')).length;
+    let vidCount = currentPaths.filter(p => p.endsWith('.mp4')).length;
+
+    for (const file of files) {
+        if (!file) continue;
+
+        const isVideo = file.type === 'video/mp4';
+        const isImage = file.type.startsWith('image/');
+        if (!isImage && !isVideo) {
+            showError('仅支持 JPG/PNG/GIF 图片和 MP4 视频');
+            continue;
+        }
+
+        // 数量限制
+        if (isImage && imgCount >= MAX_IMAGES) {
+            showError(`图片最多上传 ${MAX_IMAGES} 张`);
+            continue;
+        }
+        if (isVideo && vidCount >= MAX_VIDEOS) {
+            showError(`视频最多上传 ${MAX_VIDEOS} 个`);
+            continue;
+        }
+        if (currentPaths.length >= MAX_FILES) {
+            showError(`文件总数最多 ${MAX_FILES} 个`);
+            break;
+        }
+
+        // 大小检查
+        if (file.size > MAX_FILE_SIZE) {
+            showError(`文件 ${file.name} 超过 500MB 限制`);
+            continue;
+        }
+
+        // 创建预览占位
+        const col = document.createElement('div');
+        col.className = 'col-4 col-md-3';
+        col.innerHTML = `<div class="media-preview">
+            <div class="uploading-overlay">
+                <div class="text-center">
+                    <div class="spinner-border text-primary" style="width:1.5rem;height:1.5rem;"></div>
+                    <div class="progress-text small text-muted mt-1">准备上传...</div>
+                </div>
+            </div></div>`;
+        previewContainer.appendChild(col);
+
+        // 上传文件（自动选择普通/分块模式）
+        const progressText = col.querySelector('.progress-text');
+        uploadFileToTemp(file, progressText, function(err, url) {
+            if (err) {
+                col.remove();
+                showError(err);
+                return;
+            }
+
+            const isVid = url.endsWith('.mp4');
+            const previewHtml = isVid
+                ? `<video src="/static/${url}" controls></video><span class="video-badge"><i class="bi bi-camera-video me-1"></i>视频</span>`
+                : `<img src="/static/${url}" alt="preview">`;
+
+            col.innerHTML = `<div class="media-preview">
+                ${previewHtml}
+                <button class="delete-btn" onclick="removeTempMedia(this, '${url}')" type="button">&times;</button>
+            </div>`;
+
+            const paths = JSON.parse(mediaPaths.value || '[]');
+            paths.push(url);
+            mediaPaths.value = JSON.stringify(paths);
+
+            hideError();
+        });
+    }
+}
+
+// 上传文件到临时目录（自动选择普通上传或分块上传）
+function uploadFileToTemp(file, progressEl, callback) {
+    if (file.size <= CHUNK_SIZE) {
+        // 小文件：普通上传
+        updateProgress(progressEl, 0);
+        const formData = new FormData();
+        formData.append('file', file);
+        fetch('/house/temp-upload', { method: 'POST', body: formData })
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) return callback(data.message || '上传失败');
+            updateProgress(progressEl, 100);
+            callback(null, data.url);
+        })
+        .catch(() => callback('网络错误，上传失败'));
+    } else {
+        // 大文件：分块上传
+        chunkedUpload(file, '/house/ajax/chunk', progressEl, callback);
+    }
+}
+
+// 分块上传核心函数
+async function chunkedUpload(file, baseUrl, progressEl, callback) {
+    try {
+        // 1. 初始化
+        const initRes = await fetch(`${baseUrl}/init`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({filename: file.name})
+        });
+        const initData = await initRes.json();
+        if (!initData.success) return callback(initData.message || '初始化失败');
+        const uploadId = initData.upload_id;
+
+        // 2. 逐块上传
+        const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+        for (let i = 0; i < totalChunks; i++) {
+            const start = i * CHUNK_SIZE;
+            const end = Math.min(start + CHUNK_SIZE, file.size);
+            const chunk = file.slice(start, end);
+
+            const formData = new FormData();
+            formData.append('upload_id', uploadId);
+            formData.append('chunk_index', i);
+            formData.append('chunk', chunk, `${i}.part`);
+
+            const chunkRes = await fetch(`${baseUrl}/upload`, { method: 'POST', body: formData });
+            const chunkData = await chunkRes.json();
+            if (!chunkData.success) return callback(chunkData.message || `分块 ${i + 1} 上传失败`);
+
+            updateProgress(progressEl, Math.round(((i + 1) / totalChunks) * 90));
+        }
+
+        // 3. 合并
+        updateProgress(progressEl, 92);
+        const mergeRes = await fetch(`${baseUrl}/merge`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({upload_id: uploadId})
+        });
+        const mergeData = await mergeRes.json();
+        if (!mergeData.success) return callback(mergeData.message || '合并失败');
+
+        updateProgress(progressEl, 100);
+        callback(null, mergeData.url);
+    } catch (e) {
+        callback('网络错误，上传失败');
+    }
+}
+
+function updateProgress(el, pct) {
+    if (el) el.textContent = pct === 100 ? '完成' : `上传中 ${pct}%`;
+}
+
+function removeTempMedia(btn, url) {
+    const col = btn.closest('.col-4, .col-md-3');
+    col.remove();
+
+    const paths = JSON.parse(mediaPaths.value || '[]');
+    const idx = paths.indexOf(url);
+    if (idx > -1) paths.splice(idx, 1);
+    mediaPaths.value = JSON.stringify(paths);
+
+    fetch('/house/temp-delete', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({url: url})
+    }).catch(() => {});
+}
+
+function showError(msg) {
+    uploadError.textContent = msg;
+    uploadError.style.display = 'block';
+    dropZone.classList.add('has-error');
+    setTimeout(hideError, 3000);
+}
+
+function hideError() {
+    uploadError.style.display = 'none';
+    dropZone.classList.remove('has-error');
+}
 
 document.addEventListener('DOMContentLoaded', function() {
     loadProvinces();

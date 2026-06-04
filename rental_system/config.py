@@ -23,8 +23,10 @@ class Config:
     
     # 文件上传配置
     UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER') or 'app/static/uploads'
-    MAX_CONTENT_LENGTH = int(os.environ.get('MAX_CONTENT_LENGTH') or 16 * 1024 * 1024)  # 16MB
+    MAX_CONTENT_LENGTH = int(os.environ.get('MAX_CONTENT_LENGTH') or 500 * 1024 * 1024)  # 500MB
     ALLOWED_EXTENSIONS = set(os.environ.get('ALLOWED_EXTENSIONS', 'jpg,jpeg,png,gif,mp4').split(','))
+    CHUNK_SIZE = int(os.environ.get('CHUNK_SIZE') or 2 * 1024 * 1024)  # 分块大小 2MB
+    CHUNK_THRESHOLD = int(os.environ.get('CHUNK_THRESHOLD') or 5 * 1024 * 1024)  # 超过5MB启用分块上传
     
     # 分页配置
     ITEMS_PER_PAGE = int(os.environ.get('ITEMS_PER_PAGE') or 10)
