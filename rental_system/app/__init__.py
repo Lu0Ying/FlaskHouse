@@ -4,6 +4,7 @@ from flask_login import LoginManager, current_user
 from flask_migrate import Migrate
 from flask_mail import Mail
 from config import Config
+import json
 
 # 初始化扩展
 db = SQLAlchemy()
@@ -70,6 +71,14 @@ def create_app(config_class=Config):
 
     # 注册错误处理
     register_error_handlers(app)
+
+    # 注册 Jinja2 过滤器
+    @app.template_filter('load_json')
+    def load_json(s):
+        try:
+            return json.loads(s)
+        except (ValueError, TypeError):
+            return []
 
     # 自动初始化数据库
     with app.app_context():

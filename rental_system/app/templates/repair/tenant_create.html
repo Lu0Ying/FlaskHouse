@@ -1,0 +1,436 @@
+{% extends "base.html" %}
+{% block title %}发起维修申请{% endblock %}
+{% block extra_css %}
+<style>
+.upload-zone.dragover {
+    background: #e3f2fd !important;
+    border-color: #0d6efd !important;
+}
+.upload-zone.has-error {
+    border-color: #dc3545 !important;
+    background: #fff5f5 !important;
+}
+.media-preview {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+.media-preview img,
+.media-preview video {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    display: block;
+}
+.media-preview .delete-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 26px;
+    height: 26px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(220,53,69,0.85);
+    color: #fff;
+    font-size: 14px;
+    line-height: 26px;
+    text-align: center;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.media-preview .delete-btn:hover {
+    background: #dc3545;
+}
+.media-preview .video-badge {
+    position: absolute;
+    bottom: 4px;
+    left: 4px;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    font-size: 11px;
+    padding: 1px 6px;
+    border-radius: 4px;
+}
+.media-preview .uploading-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+</style>
+{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0"><i class="bi bi-tools"></i> 发起维修申请</h4>
+            </div>
+            <div class="card-body">
+                {% if not active_contracts %}
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i> 您目前没有有效的租赁合同，无法发起维修申请。
+                </div>
+                <div class="text-center">
+                    <a href="{{ url_for('house.index') }}" class="btn btn-primary">去租房</a>
+                </div>
+                {% else %}
+                <form method="POST" id="repairForm">
+                    <!-- 选择租赁合同 -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">选择房源 <span class="text-danger">*</span></label>
+                        <select class="form-select" id="contractSelect" name="contract_id" required>
+                            <option value="">请选择要维修的房源...</option>
+                            {% for contract in active_contracts %}
+                            <option value="{{ contract.id }}" 
+                                    data-house-id="{{ contract.house_id }}"
+                                    data-house-title="{{ contract.house.title }}"
+                                    data-house-address="{{ contract.house.address }}"
+                                    data-landlord-name="{{ contract.landlord.real_name or contract.landlord.username }}"
+                                    data-landlord-email="{{ contract.landlord.email }}"
+                                    data-landlord-phone="{{ contract.landlord.phone or '' }}"
+                                    data-start-date="{{ contract.start_date }}"
+                                    data-end-date="{{ contract.end_date }}">
+                                {{ contract.house.title }} - {{ contract.house.address }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- 租赁合同信息（选中后显示） -->
+                    <div id="contractInfo" class="card bg-light mb-4" style="display: none;">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="bi bi-file-text"></i> 租赁合同信息</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="mb-2">
+                                        <strong><i class="bi bi-house"></i> 房源：</strong>
+                                        <span id="infoHouseTitle">-</span>
+                                    </p>
+                                    <p class="mb-2">
+                                        <strong><i class="bi bi-person"></i> 房东：</strong>
+                                        <span id="infoLandlordName">-</span>
+                                    </p>
+                                    <p class="mb-2">
+                                        <strong><i class="bi bi-calendar"></i> 租期：</strong>
+                                        <span id="infoLeasePeriod">-</span>
+                                    </p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-2">
+                                        <strong><i class="bi bi-envelope"></i> 房东邮箱：</strong>
+                                        <span id="infoLandlordEmail">-</span>
+                                    </p>
+                                    <p class="mb-2">
+                                        <strong><i class="bi bi-telephone"></i> 房东电话：</strong>
+                                        <span id="infoLandlordPhone">-</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 维修描述 -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">维修描述 <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="description" name="description" rows="4" 
+                                  placeholder="请详细描述需要维修的问题，包括：&#10;- 维修位置（厨房/卫生间/卧室等）&#10;- 具体问题（水管漏水/门锁损坏/灯泡不亮等）&#10;- 您的联系方式和方便维修的时间"
+                                  required></textarea>
+                        <div class="form-text">请尽量详细描述问题，以便房东快速了解情况并安排维修</div>
+                    </div>
+
+                    <!-- 媒体上传区域 -->
+                    <div class="mb-4">
+                        <label class="form-label">维修照片/视频</label>
+                        <div id="dropZone" class="upload-zone text-center p-4 border border-2 border-dashed rounded"
+                             style="cursor:pointer; background:#f8f9fa; transition: all 0.3s;">
+                            <i class="bi bi-cloud-upload" style="font-size:2.5rem; color:#6c757d;"></i>
+                            <p class="mt-2 mb-1 text-muted">拖拽文件到此处，或点击选择文件</p>
+                            <p class="small text-muted mb-0">支持 JPG/PNG/GIF/MP4，单文件最大 16MB</p>
+                            <input type="file" id="fileInput" accept="image/*,video/mp4" multiple
+                                   style="display:none;">
+                        </div>
+                        <div id="previewContainer" class="row g-2 mt-2"></div>
+                        <input type="hidden" name="media_paths" id="mediaPaths" value="[]">
+                        <div id="uploadError" class="text-danger small mt-1" style="display:none;"></div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg" id="submitBtn" disabled>
+                            <i class="bi bi-send"></i> 提交维修申请
+                        </button>
+                        <a href="{{ url_for('repair.my_repairs') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> 返回列表
+                        </a>
+                    </div>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const contractSelect = document.getElementById('contractSelect');
+    const contractInfo = document.getElementById('contractInfo');
+    const submitBtn = document.getElementById('submitBtn');
+    const description = document.getElementById('description');
+
+    // 选择合同后显示信息
+    contractSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        
+        if (this.value) {
+            // 显示合同信息
+            document.getElementById('infoHouseTitle').textContent = selectedOption.dataset.houseTitle;
+            document.getElementById('infoLandlordName').textContent = selectedOption.dataset.landlordName;
+            document.getElementById('infoLandlordEmail').textContent = selectedOption.dataset.landlordEmail;
+            
+            const phone = selectedOption.dataset.landlordPhone;
+            document.getElementById('infoLandlordPhone').textContent = phone || '暂无';
+            
+            const startDate = new Date(selectedOption.dataset.startDate).toLocaleDateString('zh-CN');
+            const endDate = new Date(selectedOption.dataset.endDate).toLocaleDateString('zh-CN');
+            document.getElementById('infoLeasePeriod').textContent = startDate + ' 至 ' + endDate;
+            
+            contractInfo.style.display = 'block';
+            checkFormValidity();
+        } else {
+            contractInfo.style.display = 'none';
+            submitBtn.disabled = true;
+        }
+    });
+
+    // 监听描述输入
+    description.addEventListener('input', checkFormValidity);
+
+    function checkFormValidity() {
+        const isContractSelected = contractSelect.value !== '';
+        const isDescriptionValid = description.value.trim() !== '';
+        submitBtn.disabled = !(isContractSelected && isDescriptionValid);
+    }
+});
+
+// ==================== 媒体上传模块 ====================
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const previewContainer = document.getElementById('previewContainer');
+const mediaPaths = document.getElementById('mediaPaths');
+const uploadError = document.getElementById('uploadError');
+const MAX_FILES = 10;
+const MAX_IMAGES = 8;
+const MAX_VIDEOS = 2;
+const CHUNK_SIZE = 2 * 1024 * 1024;      // 分块大小 2MB
+const MAX_FILE_SIZE = 500 * 1024 * 1024;  // 单文件最大 500MB
+
+// 点击上传区域触发文件选择
+dropZone.addEventListener('click', () => fileInput.click());
+
+// 文件选择后处理
+fileInput.addEventListener('change', function() {
+    handleFiles(this.files);
+    this.value = '';
+});
+
+// 拖拽事件
+dropZone.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    this.classList.add('dragover');
+});
+dropZone.addEventListener('dragleave', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    this.classList.remove('dragover');
+});
+dropZone.addEventListener('drop', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    this.classList.remove('dragover');
+    if (e.dataTransfer.files.length) {
+        handleFiles(e.dataTransfer.files);
+    }
+});
+
+function handleFiles(files) {
+    const currentPaths = JSON.parse(mediaPaths.value || '[]');
+    let imgCount = currentPaths.filter(p => !p.endsWith('.mp4')).length;
+    let vidCount = currentPaths.filter(p => p.endsWith('.mp4')).length;
+
+    for (const file of files) {
+        if (!file) continue;
+
+        const isVideo = file.type === 'video/mp4';
+        const isImage = file.type.startsWith('image/');
+        if (!isImage && !isVideo) {
+            showError('仅支持 JPG/PNG/GIF 图片和 MP4 视频');
+            continue;
+        }
+
+        // 数量限制
+        if (isImage && imgCount >= MAX_IMAGES) {
+            showError(`图片最多上传 ${MAX_IMAGES} 张`);
+            continue;
+        }
+        if (isVideo && vidCount >= MAX_VIDEOS) {
+            showError(`视频最多上传 ${MAX_VIDEOS} 个`);
+            continue;
+        }
+        if (currentPaths.length >= MAX_FILES) {
+            showError(`文件总数最多 ${MAX_FILES} 个`);
+            break;
+        }
+
+        // 大小检查
+        if (file.size > MAX_FILE_SIZE) {
+            showError(`文件 ${file.name} 超过 500MB 限制`);
+            continue;
+        }
+
+        // 创建预览占位
+        const col = document.createElement('div');
+        col.className = 'col-4 col-md-3';
+        col.innerHTML = `<div class="media-preview">
+            <div class="uploading-overlay">
+                <div class="text-center">
+                    <div class="spinner-border text-primary" style="width:1.5rem;height:1.5rem;"></div>
+                    <div class="progress-text small text-muted mt-1">准备上传...</div>
+                </div>
+            </div></div>`;
+        previewContainer.appendChild(col);
+
+        // 上传文件（自动选择普通/分块模式）
+        const progressText = col.querySelector('.progress-text');
+        uploadFileToTemp(file, progressText, function(err, url) {
+            if (err) {
+                col.remove();
+                showError(err);
+                return;
+            }
+
+            const isVid = url.endsWith('.mp4');
+            const previewHtml = isVid
+                ? `<video src="/static/${url}" controls></video><span class="video-badge"><i class="bi bi-camera-video me-1"></i>视频</span>`
+                : `<img src="/static/${url}" alt="preview">`;
+
+            col.innerHTML = `<div class="media-preview">
+                ${previewHtml}
+                <button class="delete-btn" onclick="removeTempMedia(this, '${url}')" type="button">&times;</button>
+            </div>`;
+
+            const paths = JSON.parse(mediaPaths.value || '[]');
+            paths.push(url);
+            mediaPaths.value = JSON.stringify(paths);
+
+            hideError();
+        });
+    }
+}
+
+// 上传文件到临时目录（自动选择普通上传或分块上传）
+function uploadFileToTemp(file, progressEl, callback) {
+    if (file.size <= CHUNK_SIZE) {
+        // 小文件：普通上传
+        updateProgress(progressEl, 0);
+        const formData = new FormData();
+        formData.append('file', file);
+        fetch('/house/temp-upload', { method: 'POST', body: formData })
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) return callback(data.message || '上传失败');
+            updateProgress(progressEl, 100);
+            callback(null, data.url);
+        })
+        .catch(() => callback('网络错误，上传失败'));
+    } else {
+        // 大文件：分块上传
+        chunkedUpload(file, '/house/ajax/chunk', progressEl, callback);
+    }
+}
+
+// 分块上传核心函数
+async function chunkedUpload(file, baseUrl, progressEl, callback) {
+    try {
+        // 1. 初始化
+        const initRes = await fetch(`${baseUrl}/init`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({filename: file.name})
+        });
+        const initData = await initRes.json();
+        if (!initData.success) return callback(initData.message || '初始化失败');
+        const uploadId = initData.upload_id;
+
+        // 2. 逐块上传
+        const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+        for (let i = 0; i < totalChunks; i++) {
+            const start = i * CHUNK_SIZE;
+            const end = Math.min(start + CHUNK_SIZE, file.size);
+            const chunk = file.slice(start, end);
+
+            const formData = new FormData();
+            formData.append('upload_id', uploadId);
+            formData.append('chunk_index', i);
+            formData.append('chunk', chunk, `${i}.part`);
+
+            const chunkRes = await fetch(`${baseUrl}/upload`, { method: 'POST', body: formData });
+            const chunkData = await chunkRes.json();
+            if (!chunkData.success) return callback(chunkData.message || `分块 ${i + 1} 上传失败`);
+
+            updateProgress(progressEl, Math.round(((i + 1) / totalChunks) * 90));
+        }
+
+        // 3. 合并
+        updateProgress(progressEl, 92);
+        const mergeRes = await fetch(`${baseUrl}/merge`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({upload_id: uploadId})
+        });
+        const mergeData = await mergeRes.json();
+        if (!mergeData.success) return callback(mergeData.message || '合并失败');
+
+        updateProgress(progressEl, 100);
+        callback(null, mergeData.url);
+    } catch (e) {
+        callback('网络错误，上传失败');
+    }
+}
+
+function updateProgress(el, pct) {
+    if (el) el.textContent = pct === 100 ? '完成' : `上传中 ${pct}%`;
+}
+
+function removeTempMedia(btn, url) {
+    const col = btn.closest('.col-4, .col-md-3');
+    col.remove();
+
+    const paths = JSON.parse(mediaPaths.value || '[]');
+    const idx = paths.indexOf(url);
+    if (idx > -1) paths.splice(idx, 1);
+    mediaPaths.value = JSON.stringify(paths);
+
+    fetch('/house/temp-delete', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({url: url})
+    }).catch(() => {});
+}
+
+function showError(msg) {
+    uploadError.textContent = msg;
+    uploadError.style.display = 'block';
+    dropZone.classList.add('has-error');
+    setTimeout(hideError, 3000);
+}
+
+function hideError() {
+    uploadError.style.display = 'none';
+    dropZone.classList.remove('has-error');
+}
+</script>
+{% endblock %}

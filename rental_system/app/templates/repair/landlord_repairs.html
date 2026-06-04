@@ -1,26 +1,45 @@
 {% extends "base.html" %}
-{% block title %}所有维修{% endblock %}
+{% block title %}维修处理{% endblock %}
+{% block extra_css %}
+<style>
+.media-preview {
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+}
+.media-preview img,
+.media-preview video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+</style>
+{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2><i class="bi bi-wrench"></i> 所有维修申请</h2>
+    <h2><i class="bi bi-tools"></i> 维修处理</h2>
 </div>
 
 <div class="card">
     <div class="card-header">
         <div class="btn-group" role="group">
-            <a href="{{ url_for('repair.all_repairs') }}" class="btn btn-outline-secondary {% if not request.args.get('status') %}active{% endif %}">
+            <a href="{{ url_for('repair.landlord_repairs') }}" class="btn btn-outline-secondary {% if not request.args.get('status') %}active{% endif %}">
                 全部
             </a>
-            <a href="{{ url_for('repair.all_repairs', status='pending') }}" class="btn btn-outline-secondary {% if request.args.get('status') == 'pending' %}active{% endif %}">
+            <a href="{{ url_for('repair.landlord_repairs', status='pending') }}" class="btn btn-outline-secondary {% if request.args.get('status') == 'pending' %}active{% endif %}">
                 待处理
             </a>
-            <a href="{{ url_for('repair.all_repairs', status='processing') }}" class="btn btn-outline-secondary {% if request.args.get('status') == 'processing' %}active{% endif %}">
+            <a href="{{ url_for('repair.landlord_repairs', status='processing') }}" class="btn btn-outline-secondary {% if request.args.get('status') == 'processing' %}active{% endif %}">
                 处理中
             </a>
-            <a href="{{ url_for('repair.all_repairs', status='completed') }}" class="btn btn-outline-secondary {% if request.args.get('status') == 'completed' %}active{% endif %}">
+            <a href="{{ url_for('repair.landlord_repairs', status='completed') }}" class="btn btn-outline-secondary {% if request.args.get('status') == 'completed' %}active{% endif %}">
                 已完成
             </a>
-            <a href="{{ url_for('repair.all_repairs', status='rejected') }}" class="btn btn-outline-secondary {% if request.args.get('status') == 'rejected' %}active{% endif %}">
+            <a href="{{ url_for('repair.landlord_repairs', status='rejected') }}" class="btn btn-outline-secondary {% if request.args.get('status') == 'rejected' %}active{% endif %}">
                 已拒绝
             </a>
         </div>
@@ -32,7 +51,7 @@
                     <tr>
                         <th>ID</th>
                         <th>房源信息</th>
-                        <th>申请人</th>
+                        <th>租客</th>
                         <th>描述</th>
                         <th>状态</th>
                         <th>提交时间</th>
@@ -53,7 +72,25 @@
                             <p class="text-muted small">{{ repair.tenant.phone }}</p>
                             {% endif %}
                         </td>
-                        <td>{{ repair.description[:50] }}{% if repair.description|length > 50 %}...{% endif %}</td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                {% if repair.images and repair.images != '[]' %}
+                                {% set media_list = repair.images | load_json %}
+                                {% if media_list | length > 0 %}
+                                <div class="media-preview">
+                                    {% if media_list[0].endswith('.mp4') %}
+                                    <img src="/static/upload/default-video.png" alt="视频">
+                                    {% else %}
+                                    <img src="/static/{{ media_list[0] }}" alt="预览">
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                                {% endif %}
+                                <div>
+                                    {{ repair.description[:40] }}{% if repair.description|length > 40 %}...{% endif %}
+                                </div>
+                            </div>
+                        </td>
                         <td>
                             {% if repair.status == 'pending' %}
                             <span class="badge bg-warning">待处理</span>
@@ -83,7 +120,10 @@
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="7" class="text-center text-muted">暂无维修申请</td>
+                        <td colspan="7" class="text-center text-muted py-5">
+                            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                            暂无维修申请
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -95,13 +135,13 @@
             <ul class="pagination justify-content-center">
                 {% if repairs.has_prev %}
                 <li class="page-item">
-                    <a class="page-link" href="{{ url_for('repair.all_repairs', page=repairs.prev_num, status=request.args.get('status')) }}">上一页</a>
+                    <a class="page-link" href="{{ url_for('repair.landlord_repairs', page=repairs.prev_num, status=request.args.get('status')) }}">上一页</a>
                 </li>
                 {% endif %}
                 {% for page in repairs.iter_pages() %}
                 {% if page %}
                 <li class="page-item {% if page == repairs.page %}active{% endif %}">
-                    <a class="page-link" href="{{ url_for('repair.all_repairs', page=page, status=request.args.get('status')) }}">{{ page }}</a>
+                    <a class="page-link" href="{{ url_for('repair.landlord_repairs', page=page, status=request.args.get('status')) }}">{{ page }}</a>
                 </li>
                 {% else %}
                 <li class="page-item disabled"><span class="page-link">...</span></li>
@@ -109,7 +149,7 @@
                 {% endfor %}
                 {% if repairs.has_next %}
                 <li class="page-item">
-                    <a class="page-link" href="{{ url_for('repair.all_repairs', page=repairs.next_num, status=request.args.get('status')) }}">下一页</a>
+                    <a class="page-link" href="{{ url_for('repair.landlord_repairs', page=repairs.next_num, status=request.args.get('status')) }}">下一页</a>
                 </li>
                 {% endif %}
             </ul>

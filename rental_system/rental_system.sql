@@ -16,6 +16,29 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
+-- Table structure for table `alembic_version`
+--
+
+DROP TABLE IF EXISTS `alembic_version`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `alembic_version` (
+  `version_num` varchar(32) NOT NULL,
+  PRIMARY KEY (`version_num`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `alembic_version`
+--
+
+LOCK TABLES `alembic_version` WRITE;
+/*!40000 ALTER TABLE `alembic_version` DISABLE KEYS */;
+INSERT INTO `alembic_version` VALUES ('c23c67292ac0');
+/*!40000 ALTER TABLE `alembic_version` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `appointments`
 --
 
@@ -68,13 +91,20 @@ CREATE TABLE `complaints` (
   `response` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `created_at` datetime DEFAULT NULL,
   `resolved_at` datetime DEFAULT NULL,
+  `category` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `target_id` int DEFAULT NULL,
+  `images` text COLLATE utf8mb4_unicode_ci,
+  `reject_reason` text COLLATE utf8mb4_unicode_ci,
   PRIMARY KEY (`id`),
   KEY `ix_complaints_created_at` (`created_at`),
   KEY `ix_complaints_house_id` (`house_id`),
   KEY `ix_complaints_tenant_id` (`tenant_id`),
+  KEY `ix_complaints_category` (`category`),
+  KEY `ix_complaints_status` (`status`),
+  KEY `ix_complaints_target_id` (`target_id`),
   CONSTRAINT `complaints_ibfk_1` FOREIGN KEY (`tenant_id`) REFERENCES `users` (`id`),
   CONSTRAINT `complaints_ibfk_2` FOREIGN KEY (`house_id`) REFERENCES `houses` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -83,6 +113,7 @@ CREATE TABLE `complaints` (
 
 LOCK TABLES `complaints` WRITE;
 /*!40000 ALTER TABLE `complaints` DISABLE KEYS */;
+INSERT INTO `complaints` VALUES (1,3,10,NULL,'111','approved',NULL,'2026-06-04 12:44:48',NULL,'house',NULL,'[\"uploads/2025-09-12_095044_20260604204443.png\"]',NULL),(2,3,10,NULL,'111','approved','可','2026-06-04 12:45:39','2026-06-04 20:47:00','contract',15,'[]',NULL),(3,3,10,NULL,'2','rejected','退你京✌房吃了吗您','2026-06-04 12:45:58','2026-06-04 20:46:52','rent',17,'[\"uploads/2025-09-11_100247_20260604204557.png\"]','退你京✌房吃了吗您');
 /*!40000 ALTER TABLE `complaints` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -103,7 +134,7 @@ CREATE TABLE `house_media` (
   PRIMARY KEY (`id`),
   KEY `ix_house_media_house_id` (`house_id`),
   CONSTRAINT `house_media_ibfk_1` FOREIGN KEY (`house_id`) REFERENCES `houses` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -112,7 +143,7 @@ CREATE TABLE `house_media` (
 
 LOCK TABLES `house_media` WRITE;
 /*!40000 ALTER TABLE `house_media` DISABLE KEYS */;
-INSERT INTO `house_media` VALUES (1,1,'image','uploads/1_0.png',0,'2026-05-31 16:23:54'),(2,1,'image','uploads/1_1.png',1,'2026-05-31 16:23:54'),(3,2,'image','uploads/2_0.png',0,'2026-05-31 16:23:54'),(4,2,'image','uploads/2_1.png',1,'2026-05-31 16:23:54'),(5,3,'image','uploads/3_0.png',0,'2026-05-31 16:23:54'),(6,3,'image','uploads/3_1.png',1,'2026-05-31 16:23:54'),(7,3,'image','uploads/3_2.png',2,'2026-05-31 16:23:54'),(8,4,'image','uploads/4_0.png',0,'2026-05-31 16:23:54'),(9,4,'image','uploads/4_1.png',1,'2026-05-31 16:23:54'),(10,5,'image','uploads/5_0.png',0,'2026-05-31 16:23:54'),(11,5,'image','uploads/5_1.png',1,'2026-05-31 16:23:54'),(12,6,'image','uploads/6_0.png',0,'2026-05-31 16:23:54'),(13,6,'image','uploads/6_1.png',1,'2026-05-31 16:23:54'),(14,7,'image','uploads/7_0.png',0,'2026-05-31 16:23:54'),(15,8,'image','uploads/8_0.png',0,'2026-05-31 16:23:54'),(16,9,'image','uploads/9_0.png',0,'2026-05-31 16:23:54'),(17,9,'image','uploads/9_1.png',1,'2026-05-31 16:23:54'),(18,10,'image','uploads/10_0.png',0,'2026-05-31 16:23:54');
+INSERT INTO `house_media` VALUES (1,1,'image','uploads/1_0.png',0,'2026-05-31 16:23:54'),(2,1,'image','uploads/1_1.png',1,'2026-05-31 16:23:54'),(3,2,'image','uploads/2_0.png',0,'2026-05-31 16:23:54'),(4,2,'image','uploads/2_1.png',1,'2026-05-31 16:23:54'),(5,3,'image','uploads/3_0.png',0,'2026-05-31 16:23:54'),(6,3,'image','uploads/3_1.png',1,'2026-05-31 16:23:54'),(7,3,'image','uploads/3_2.png',2,'2026-05-31 16:23:54'),(8,4,'image','uploads/4_0.png',0,'2026-05-31 16:23:54'),(9,4,'image','uploads/4_1.png',1,'2026-05-31 16:23:54'),(10,5,'image','uploads/5_0.png',0,'2026-05-31 16:23:54'),(11,5,'image','uploads/5_1.png',1,'2026-05-31 16:23:54'),(12,6,'image','uploads/6_0.png',0,'2026-05-31 16:23:54'),(13,6,'image','uploads/6_1.png',1,'2026-05-31 16:23:54'),(14,7,'image','uploads/7_0.png',0,'2026-05-31 16:23:54'),(15,8,'image','uploads/8_0.png',0,'2026-05-31 16:23:54'),(16,9,'image','uploads/9_0.png',0,'2026-05-31 16:23:54'),(17,9,'image','uploads/9_1.png',1,'2026-05-31 16:23:54'),(18,10,'image','uploads/10_0.png',0,'2026-05-31 16:23:54'),(19,12,'image','uploads/2025-11-17_135549_20260604194232.png',0,'2026-06-04 11:43:04'),(20,12,'image','uploads/2025-09-17_202845_20260604194354.png',0,'2026-06-04 11:43:55'),(21,12,'video','uploads/2026-04-19_170029_20260604195231.mp4',0,'2026-06-04 11:52:32');
 /*!40000 ALTER TABLE `house_media` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -151,7 +182,7 @@ CREATE TABLE `houses` (
   KEY `ix_houses_rent_price` (`rent_price`),
   KEY `ix_houses_room_count` (`room_count`),
   CONSTRAINT `houses_ibfk_1` FOREIGN KEY (`landlord_id`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -160,7 +191,7 @@ CREATE TABLE `houses` (
 
 LOCK TABLES `houses` WRITE;
 /*!40000 ALTER TABLE `houses` DISABLE KEYS */;
-INSERT INTO `houses` VALUES (1,2,'CBD核心精装两居','北京市朝阳区建国路88号SOHO现代城','朝阳区','CBD','公寓','2室1厅',85.5,5500,11000,'精装','位于CBD核心区域，地铁1号线大望路站步行5分钟，周边配套齐全，拎包入住。','available',NULL,NULL,'110000','110100','110105','2026-05-31 16:23:54','2026-06-03 14:52:49'),(2,2,'中关村学区三居室','北京市海淀区中关村大街1号科技大厦','110108','','住宅','3室2厅',120,8000,16000,'简装','学区房，临近中关村一小，地铁4号线中关村站步行3分钟，适合家庭居住。','available',NULL,NULL,'110000','110100','110108','2026-05-31 16:23:54','2026-06-03 13:37:38'),(3,2,'王府井精装一居','北京市东城区王府井大街10号乐天银泰','东城区','','公寓','1室1厅',55,4200,8400,'精装','繁华商业区，购物便利，地铁1号线王府井站直达。','available',NULL,NULL,'110000','110100','110101','2026-05-31 16:23:54','2026-06-02 15:38:46'),(4,2,'金融街舒适两居','北京市西城区金融街20号国际企业大厦','西城区','金融街','住宅','2室1厅',78,6200,12400,'精装','金融中心地段，办公便利，生活配套完善，临近地铁2号线。','available',NULL,NULL,'110000','110100','110102','2026-05-31 16:23:54','2026-05-31 16:23:54'),(5,2,'方庄成熟社区大三居','北京市丰台区方庄路15号芳城园','丰台区','方庄','住宅','3室2厅',135,7500,15000,'精装','成熟社区，配套齐全，临近方庄购物中心，适合大家庭居住。','available',NULL,NULL,'110000','110100','110106','2026-05-31 16:23:54','2026-06-03 13:18:06'),(6,2,'古城Loft公寓','北京市石景山区古城路8号绿地环球金融城','石景山区','古城','loft','1室1厅',45,3800,7600,'简装','Loft户型，挑高4.5米，适合年轻人居住，地铁1号线古城站直达。','available',NULL,NULL,'110000','110100','110107','2026-05-31 16:23:54','2026-05-31 16:23:54'),(7,2,'朝阳公园旁精装公寓','北京市朝阳区朝阳公园路19号棕榈泉国际公寓','朝阳区','朝阳公园','公寓','2室2厅',95,6800,13600,'精装','紧邻朝阳公园，环境优美，空气清新，高端社区配套。','available',NULL,NULL,'110000','110100','110105','2026-05-31 16:23:54','2026-05-31 16:23:54'),(8,5,'五道口精装三居室','北京市海淀区成府路28号华清嘉园','海淀区','五道口','住宅','3室1厅',105,7200,14400,'简装','高校云集，学术氛围浓厚，地铁13号线五道口站步行5分钟。','available',NULL,NULL,'110000','110100','110108','2026-05-31 16:23:54','2026-05-31 16:23:54'),(9,5,'望京SOHO附近公寓','北京市朝阳区望京街9号望京SOHO','朝阳区','望京','公寓','1室1厅',48,4500,9000,'精装','望京商圈核心，办公居住两相宜，地铁14号线望京南站直达。','available',NULL,NULL,'110000','110100','110105','2026-05-31 16:23:54','2026-06-03 12:01:46'),(10,5,'通州核心精装四居','北京市通州区新华大街50号万达公寓','通州区','通州城区','住宅','4室2厅',168,9500,19000,'精装','大型社区，配套完善，临近万达广场，适合多孩家庭。','rented',NULL,NULL,'110000','110100','110112','2026-05-31 16:23:54','2026-06-03 15:27:06');
+INSERT INTO `houses` VALUES (1,2,'CBD核心精装两居','北京市朝阳区建国路88号SOHO现代城','朝阳区','CBD','公寓','2室1厅',85.5,5500,11000,'精装','位于CBD核心区域，地铁1号线大望路站步行5分钟，周边配套齐全，拎包入住。','available',NULL,NULL,'110000','110100','110105','2026-05-31 16:23:54','2026-06-03 14:52:49'),(2,2,'中关村学区三居室','北京市海淀区中关村大街1号科技大厦','110108','','住宅','3室2厅',120,8000,16000,'简装','学区房，临近中关村一小，地铁4号线中关村站步行3分钟，适合家庭居住。','available',NULL,NULL,'110000','110100','110108','2026-05-31 16:23:54','2026-06-03 13:37:38'),(3,2,'王府井精装一居','北京市东城区王府井大街10号乐天银泰','东城区','','公寓','1室1厅',55,4200,8400,'精装','繁华商业区，购物便利，地铁1号线王府井站直达。','available',NULL,NULL,'110000','110100','110101','2026-05-31 16:23:54','2026-06-02 15:38:46'),(4,2,'金融街舒适两居','北京市西城区金融街20号国际企业大厦','西城区','金融街','住宅','2室1厅',78,6200,12400,'精装','金融中心地段，办公便利，生活配套完善，临近地铁2号线。','available',NULL,NULL,'110000','110100','110102','2026-05-31 16:23:54','2026-05-31 16:23:54'),(5,2,'方庄成熟社区大三居','北京市丰台区方庄路15号芳城园','丰台区','方庄','住宅','3室2厅',135,7500,15000,'精装','成熟社区，配套齐全，临近方庄购物中心，适合大家庭居住。','available',NULL,NULL,'110000','110100','110106','2026-05-31 16:23:54','2026-06-03 13:18:06'),(6,2,'古城Loft公寓','北京市石景山区古城路8号绿地环球金融城','石景山区','古城','loft','1室1厅',45,3800,7600,'简装','Loft户型，挑高4.5米，适合年轻人居住，地铁1号线古城站直达。','available',NULL,NULL,'110000','110100','110107','2026-05-31 16:23:54','2026-05-31 16:23:54'),(7,2,'朝阳公园旁精装公寓','北京市朝阳区朝阳公园路19号棕榈泉国际公寓','朝阳区','朝阳公园','公寓','2室2厅',95,6800,13600,'精装','紧邻朝阳公园，环境优美，空气清新，高端社区配套。','available',NULL,NULL,'110000','110100','110105','2026-05-31 16:23:54','2026-05-31 16:23:54'),(8,5,'五道口精装三居室','北京市海淀区成府路28号华清嘉园','海淀区','五道口','住宅','3室1厅',105,7200,14400,'简装','高校云集，学术氛围浓厚，地铁13号线五道口站步行5分钟。','available',NULL,NULL,'110000','110100','110108','2026-05-31 16:23:54','2026-05-31 16:23:54'),(9,5,'望京SOHO附近公寓','北京市朝阳区望京街9号望京SOHO','朝阳区','望京','公寓','1室1厅',48,4500,9000,'精装','望京商圈核心，办公居住两相宜，地铁14号线望京南站直达。','available',NULL,NULL,'110000','110100','110105','2026-05-31 16:23:54','2026-06-03 12:01:46'),(10,5,'通州核心精装四居','北京市通州区新华大街50号万达公寓','通州区','通州城区','住宅','4室2厅',168,9500,19000,'精装','大型社区，配套完善，临近万达广场，适合多孩家庭。','rented',NULL,NULL,'110000','110100','110112','2026-05-31 16:23:54','2026-06-03 15:27:06'),(12,2,'1','1','110108','','loft','1室0厅',1,0,1,'精装','1','available',NULL,NULL,'110000','110100','110108','2026-06-04 11:43:04','2026-06-04 11:43:04');
 /*!40000 ALTER TABLE `houses` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -228,7 +259,7 @@ CREATE TABLE `messages` (
   CONSTRAINT `messages_ibfk_1` FOREIGN KEY (`sender_id`) REFERENCES `users` (`id`),
   CONSTRAINT `messages_ibfk_2` FOREIGN KEY (`receiver_id`) REFERENCES `users` (`id`),
   CONSTRAINT `messages_ibfk_3` FOREIGN KEY (`parent_id`) REFERENCES `messages` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -237,6 +268,7 @@ CREATE TABLE `messages` (
 
 LOCK TABLES `messages` WRITE;
 /*!40000 ALTER TABLE `messages` DISABLE KEYS */;
+INSERT INTO `messages` VALUES (1,3,2,'111','message',0,NULL,'2026-06-04 13:24:00');
 /*!40000 ALTER TABLE `messages` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -260,7 +292,7 @@ CREATE TABLE `news` (
   KEY `ix_news_publisher_id` (`publisher_id`),
   KEY `ix_news_created_at` (`created_at`),
   CONSTRAINT `news_ibfk_1` FOREIGN KEY (`publisher_id`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -269,7 +301,7 @@ CREATE TABLE `news` (
 
 LOCK TABLES `news` WRITE;
 /*!40000 ALTER TABLE `news` DISABLE KEYS */;
-INSERT INTO `news` VALUES (1,1,'欢迎使用智能房屋租赁系统','<p>感谢您使用智能房屋租赁系统！这是一个功能完善的房屋租赁平台，支持房源发布、在线签约、智能搜索等功能。</p><p>祝您使用愉快！</p>','系统公告','published','2026-05-31 16:23:54',NULL),(2,1,'平台新功能上线','<p>我们很高兴地宣布，平台新增了智能推荐功能，可以根据您的浏览历史为您推荐合适的房源。</p>','功能更新','published','2026-05-31 16:23:54',NULL),(3,1,'平台新功能上线','<p>我们很高兴地宣布，平台新增了智能推荐功能，可以根据您的浏览历史为您推荐合适的房源。</p>','功能更新','published',NULL,'2026-06-02 13:25:13');
+INSERT INTO `news` VALUES (1,1,'欢迎使用智能房屋租赁系统','<p>感谢您使用智能房屋租赁系统！这是一个功能完善的房屋租赁平台，支持房源发布、在线签约、智能搜索等功能。</p><p>祝您使用愉快！</p>','系统公告','published','2026-05-31 16:23:54',NULL),(2,1,'平台新功能上线','<p>我们很高兴地宣布，平台新增了智能推荐功能，可以根据您的浏览历史为您推荐合适的房源。</p>','功能更新','published','2026-05-31 16:23:54',NULL),(3,1,'平台新功能上线','<p>我们很高兴地宣布，平台新增了智能推荐功能，可以根据您的浏览历史为您推荐合适的房源。</p>','功能更新','published',NULL,'2026-06-02 13:25:13'),(4,1,'平台新功能上线','<p>我们很高兴地宣布，平台新增了智能推荐功能，可以根据您的浏览历史为您推荐合适的房源。</p>','功能更新','published',NULL,'2026-06-04 15:41:56');
 /*!40000 ALTER TABLE `news` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -321,8 +353,8 @@ CREATE TABLE `rent_payments` (
   `payment_method` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `transaction_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
-  `start_date` date DEFAULT NULL COMMENT '账单周期起始日期',
-  `end_date` date DEFAULT NULL COMMENT '账单周期结束日期',
+  `start_date` date DEFAULT NULL,
+  `end_date` date DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `ix_rent_payments_contract_id` (`contract_id`),
   CONSTRAINT `rent_payments_ibfk_1` FOREIGN KEY (`contract_id`) REFERENCES `lease_contracts` (`id`)
@@ -391,7 +423,7 @@ CREATE TABLE `system_logs` (
   KEY `ix_system_logs_user_id` (`user_id`),
   KEY `ix_system_logs_created_at` (`created_at`),
   CONSTRAINT `system_logs_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=39 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -400,6 +432,7 @@ CREATE TABLE `system_logs` (
 
 LOCK TABLES `system_logs` WRITE;
 /*!40000 ALTER TABLE `system_logs` DISABLE KEYS */;
+INSERT INTO `system_logs` VALUES (1,3,'用户注销','127.0.0.1','{\"username\": \"tenant1\"}','2026-06-04 13:01:24'),(2,2,'用户登录成功','127.0.0.1','{\"email\": \"landlord@example.com\", \"remember\": false}','2026-06-04 13:01:37'),(3,2,'用户注销','127.0.0.1','{\"username\": \"landlord1\"}','2026-06-04 13:02:01'),(4,5,'用户登录成功','127.0.0.1','{\"email\": \"landlord1@example.com\", \"remember\": false}','2026-06-04 13:02:13'),(5,5,'用户注销','127.0.0.1','{\"username\": \"landlord2\"}','2026-06-04 13:02:21'),(6,1,'用户登录成功','127.0.0.1','{\"email\": \"admin@rentalsystem.com\", \"remember\": false}','2026-06-04 13:02:30'),(7,1,'用户注销','127.0.0.1','{\"username\": \"admin\"}','2026-06-04 13:02:53'),(8,3,'用户登录成功','127.0.0.1','{\"email\": \"tenant@example.com\", \"remember\": false}','2026-06-04 13:03:17'),(9,3,'用户注销','127.0.0.1','{\"username\": \"tenant1\"}','2026-06-04 13:06:24'),(10,NULL,'用户登录失败-密码错误','127.0.0.1','{\"email\": \"landlord@example.com\"}','2026-06-04 13:06:39'),(11,5,'用户登录成功','127.0.0.1','{\"email\": \"landlord1@example.com\", \"remember\": false}','2026-06-04 13:06:47'),(12,5,'用户注销','127.0.0.1','{\"username\": \"landlord2\"}','2026-06-04 13:16:04'),(13,3,'用户登录成功','127.0.0.1','{\"email\": \"tenant@example.com\", \"remember\": false}','2026-06-04 13:16:17'),(14,3,'用户注销','127.0.0.1','{\"username\": \"tenant1\"}','2026-06-04 13:21:17'),(15,1,'用户登录成功','127.0.0.1','{\"email\": \"admin@rentalsystem.com\", \"remember\": false}','2026-06-04 13:21:24'),(16,1,'用户注销','127.0.0.1','{\"username\": \"admin\"}','2026-06-04 13:23:01'),(17,2,'用户登录成功','127.0.0.1','{\"email\": \"landlord@example.com\", \"remember\": false}','2026-06-04 13:23:12'),(18,2,'用户注销','127.0.0.1','{\"username\": \"landlord1\"}','2026-06-04 13:23:27'),(19,1,'用户登录成功','127.0.0.1','{\"email\": \"admin@rentalsystem.com\", \"remember\": false}','2026-06-04 13:23:38'),(20,1,'用户注销','127.0.0.1','{\"username\": \"admin\"}','2026-06-04 13:23:43'),(21,3,'用户登录成功','127.0.0.1','{\"email\": \"tenant@example.com\", \"remember\": false}','2026-06-04 13:23:52'),(22,3,'用户注销','127.0.0.1','{\"username\": \"tenant1\"}','2026-06-04 13:25:36'),(23,5,'用户登录成功','127.0.0.1','{\"email\": \"landlord1@example.com\", \"remember\": false}','2026-06-04 13:25:47'),(24,5,'用户注销','127.0.0.1','{\"username\": \"landlord2\"}','2026-06-04 13:26:10'),(25,3,'用户登录成功','127.0.0.1','{\"email\": \"tenant@example.com\", \"remember\": false}','2026-06-04 13:26:23'),(26,3,'用户注销','127.0.0.1','{\"username\": \"tenant1\"}','2026-06-04 14:08:13'),(27,1,'用户登录成功','127.0.0.1','{\"email\": \"admin@rentalsystem.com\", \"remember\": false}','2026-06-04 14:08:24'),(28,1,'用户注销','127.0.0.1','{\"username\": \"admin\"}','2026-06-04 14:09:12'),(29,1,'用户登录成功','127.0.0.1','{\"email\": \"admin@rentalsystem.com\", \"remember\": false}','2026-06-04 14:09:23'),(30,1,'管理员编辑用户','127.0.0.1','{\"target_user_id\": 5, \"username\": \"landlord2\", \"role\": \"landlord\", \"status\": \"active\"}','2026-06-04 14:17:34'),(31,1,'管理员编辑用户','127.0.0.1','{\"target_user_id\": 5, \"username\": \"landlord2\", \"role\": \"landlord\", \"status\": \"active\"}','2026-06-04 14:17:37'),(32,1,'用户注销','127.0.0.1','{\"username\": \"admin\"}','2026-06-04 14:17:49'),(33,NULL,'用户登录失败-密码错误','127.0.0.1','{\"email\": \"admin@rentalsystem.com\"}','2026-06-04 14:17:57'),(34,1,'用户登录成功','127.0.0.1','{\"email\": \"admin@rentalsystem.com\", \"remember\": false}','2026-06-04 14:18:00'),(35,1,'用户注销','127.0.0.1','{\"username\": \"admin\"}','2026-06-04 14:19:43'),(36,3,'用户登录成功','127.0.0.1','{\"email\": \"tenant@example.com\", \"remember\": false}','2026-06-04 14:20:01'),(37,3,'更新个人信息','127.0.0.1','{\"username\": \"tenant1\"}','2026-06-04 14:22:57'),(38,3,'更新个人信息','127.0.0.1','{\"username\": \"tenant1\"}','2026-06-04 14:22:59');
 /*!40000 ALTER TABLE `system_logs` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -463,7 +496,7 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (1,'admin','pbkdf2:sha256:600000$qG6E2asrbeqUksjY$bcaf9064a190bd97a418d98557a1491f68fea51962697712ad21e0af1bef7ce0','admin@rentalsystem.com',NULL,'admin','系统管理员',NULL,NULL,'active','2026-05-31 16:23:54'),(2,'landlord1','pbkdf2:sha256:600000$M5jSlnqSyDAvzaBN$afa74df3d6e12299d3f7439804acc529c09ddb490ead9823a8c125d84617a65f','landlord@example.com',NULL,'landlord','张房东',NULL,NULL,'active','2026-05-31 16:23:54'),(3,'tenant1','pbkdf2:sha256:600000$OLlVukATx9G6pQ7G$7ac3a1a4663cca65a4134ac30f9050f27af94e77bed7cd53ec2663ab3105afb2','tenant@example.com',NULL,'tenant','李租客',NULL,NULL,'active','2026-05-31 16:23:54'),(4,'tenant2','pbkdf2:sha256:600000$f7EmNAWuXNWt6Lvs$76e3bf74f56eb9ff0e9e9983ee7b5e3d9fc1eeef675efe8a4413a2b1fe0d989a','tenant1@example.com',NULL,'tenant',NULL,NULL,NULL,'active','2026-06-03 14:11:21'),(5,'landlord2','pbkdf2:sha256:600000$g7IdfX5JZI5n3IKW$c1fba3ad0d0e9e6d6ef9f39f5925323fbb336b0435114d0e1d35a43f7f21295a','landlord1@example.com',NULL,'landlord',NULL,NULL,NULL,'active','2026-06-03 14:51:30');
+INSERT INTO `users` VALUES (1,'admin','pbkdf2:sha256:600000$qG6E2asrbeqUksjY$bcaf9064a190bd97a418d98557a1491f68fea51962697712ad21e0af1bef7ce0','admin@rentalsystem.com',NULL,'admin','系统管理员',NULL,NULL,'active','2026-05-31 16:23:54'),(2,'landlord1','pbkdf2:sha256:600000$M5jSlnqSyDAvzaBN$afa74df3d6e12299d3f7439804acc529c09ddb490ead9823a8c125d84617a65f','landlord@example.com',NULL,'landlord','张房东',NULL,NULL,'active','2026-05-31 16:23:54'),(3,'tenant1','pbkdf2:sha256:600000$OLlVukATx9G6pQ7G$7ac3a1a4663cca65a4134ac30f9050f27af94e77bed7cd53ec2663ab3105afb2','tenant@example.com','1','tenant','李租客','',NULL,'active','2026-05-31 16:23:54'),(4,'tenant2','pbkdf2:sha256:600000$f7EmNAWuXNWt6Lvs$76e3bf74f56eb9ff0e9e9983ee7b5e3d9fc1eeef675efe8a4413a2b1fe0d989a','tenant1@example.com',NULL,'tenant',NULL,NULL,NULL,'active','2026-06-03 14:11:21'),(5,'landlord2','pbkdf2:sha256:600000$g7IdfX5JZI5n3IKW$c1fba3ad0d0e9e6d6ef9f39f5925323fbb336b0435114d0e1d35a43f7f21295a','landlord1@example.com','1','landlord','1','',NULL,'active','2026-06-03 14:51:30');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -553,4 +586,4 @@ SET character_set_client = @saved_cs_client;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-06-03 23:30:07
+-- Dump completed on 2026-06-04 22:28:01

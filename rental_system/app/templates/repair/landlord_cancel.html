@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}取消维修申请{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 class="mb-0"><i class="bi bi-exclamation-triangle"></i> 取消维修申请 #{{ repair.id }}</h4>
+                <a href="{{ url_for('repair.landlord_repairs') }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left"></i> 返回
+                </a>
+            </div>
+            <div class="card-body">
+                <!-- 维修申请信息 -->
+                <div class="mb-4">
+                    <h5 class="border-bottom pb-2">维修申请信息</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-2">
+                                <strong><i class="bi bi-house"></i> 房源：</strong>
+                                {{ repair.house.title }}
+                            </p>
+                            <p class="mb-2">
+                                <strong><i class="bi bi-geo-alt"></i> 地址：</strong>
+                                {{ repair.house.address }}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-2">
+                                <strong><i class="bi bi-person"></i> 租客：</strong>
+                                {{ repair.tenant.username }}
+                            </p>
+                            <p class="mb-2">
+                                <strong><i class="bi bi-telephone"></i> 租客电话：</strong>
+                                {{ repair.tenant.phone or '未填写' }}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <strong><i class="bi bi-chat-left-text"></i> 维修描述：</strong>
+                        <p class="p-3 bg-light rounded mt-2">{{ repair.description }}</p>
+                    </div>
+                </div>
+
+                <!-- 管理员信息 -->
+                <div class="mb-4">
+                    <h5 class="border-bottom pb-2">管理员信息</h5>
+                    <p class="mb-1"><strong><i class="bi bi-envelope"></i> 收件人：</strong>{{ admin.email }}
+                    </p>
+                    <p class="mb-0"><strong><i class="bi bi-person"></i> 用户：</strong>{{ admin.username }}</p>
+                </div>
+
+                <!-- 取消原因 -->
+                <form method="POST">
+                    <div class="mb-4">
+                        <label for="reason" class="form-label fw-bold">取消原因 <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="reason" name="reason" rows="4" required placeholder="请详细说明取消维修申请的原因"></textarea>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-danger btn-lg">
+                            <i class="bi bi-send"></i> 发送消息并取消申请
+                        </button>
+                        <a href="{{ url_for('repair.landlord_repairs') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> 取消
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

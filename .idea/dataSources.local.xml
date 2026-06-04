@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="dataSourceStorageLocal" created-in="IU-252.25557.131">
+  <component name="dataSourceStorageLocal" created-in="PY-261.24374.152">
     <data-source name="rental_system@localhost" uuid="de68ba85-84d5-4d48-ab76-c8c3d760a152">
       <database-info product="MySQL" version="8.4.8" jdbc-version="4.2" driver-name="MySQL Connector/J" driver-version="mysql-connector-j-9.7.0 (Revision: 0aade1f13bcc98faf7dda5c02e782481eb291f62)" dbms="MYSQL" exact-version="8.4.8" exact-driver-version="9.7">
         <extra-name-characters>$</extra-name-characters>

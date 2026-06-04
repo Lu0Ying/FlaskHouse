@@ -28,7 +28,6 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('house.index') }}">房源列表</a>
                     </li>
-                    {% endif %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('search.index') }}">智能搜索</a>
                     </li>
@@ -37,6 +36,7 @@
                             <i class="bi bi-star-fill"></i> 智能推荐
                         </a>
                     </li>
+                    {% endif %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('news.index') }}">新闻资讯</a>
                     </li>

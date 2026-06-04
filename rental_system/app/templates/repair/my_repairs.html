@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block title %}我的维修申请{% endblock %}
+{% block extra_css %}
+<style>
+.media-preview {
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+}
+.media-preview img,
+.media-preview video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+</style>
+{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-tools"></i> 我的维修申请</h2>
+    <a href="{{ url_for('repair.tenant_create') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> 发起维修申请
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <div class="btn-group" role="group">
+            <a href="{{ url_for('repair.my_repairs') }}" class="btn btn-outline-secondary {% if not request.args.get('status') %}active{% endif %}">
+                全部
+            </a>
+            <a href="{{ url_for('repair.my_repairs', status='pending') }}" class="btn btn-outline-secondary {% if request.args.get('status') == 'pending' %}active{% endif %}">
+                待处理
+            </a>
+            <a href="{{ url_for('repair.my_repairs', status='processing') }}" class="btn btn-outline-secondary {% if request.args.get('status') == 'processing' %}active{% endif %}">
+                处理中
+            </a>
+            <a href="{{ url_for('repair.my_repairs', status='completed') }}" class="btn btn-outline-secondary {% if request.args.get('status') == 'completed' %}active{% endif %}">
+                已完成
+            </a>
+            <a href="{{ url_for('repair.my_repairs', status='rejected') }}" class="btn btn-outline-secondary {% if request.args.get('status') == 'rejected' %}active{% endif %}">
+                已拒绝
+            </a>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>房源信息</th>
+                        <th>描述</th>
+                        <th>状态</th>
+                        <th>提交时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for repair in repairs.items %}
+                    <tr>
+                        <td>#{{ repair.id }}</td>
+                        <td>
+                            <a href="{{ url_for('house.detail', id=repair.house_id) }}">{{ repair.house.title }}</a>
+                            <p class="text-muted small">{{ repair.house.address }}</p>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                {% if repair.images and repair.images != '[]' %}
+                                {% set media_list = repair.images | load_json %}
+                                {% if media_list | length > 0 %}
+                                <div class="media-preview">
+                                    {% if media_list[0].endswith('.mp4') %}
+                                    <img src="/static/upload/default-video.png" alt="视频">
+                                    {% else %}
+                                    <img src="/static/{{ media_list[0] }}" alt="预览">
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                                {% endif %}
+                                <div>
+                                    {{ repair.description[:40] }}{% if repair.description|length > 40 %}...{% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            {% if repair.status == 'pending' %}
+                            <span class="badge bg-warning">待处理</span>
+                            {% elif repair.status == 'processing' %}
+                            <span class="badge bg-info">处理中</span>
+                            {% elif repair.status == 'completed' %}
+                            <span class="badge bg-success">已完成</span>
+                            {% elif repair.status == 'rejected' %}
+                            <span class="badge bg-danger">已拒绝</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ repair.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ repair.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{{ url_for('repair.detail', id=repair.id) }}" class="btn btn-sm btn-outline-primary" title="查看详情">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                {% if repair.status == 'pending' %}
+                                <form method="POST" action="{{ url_for('repair.cancel', id=repair.id) }}" style="display:inline;" onsubmit="return confirm('确定要取消此维修申请吗？');">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="取消申请">
+                                        <i class="bi bi-x-circle"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-5">
+                            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                            暂无维修申请
+                            <br><br>
+                            <a href="{{ url_for('repair.tenant_create') }}" class="btn btn-primary btn-sm">
+                                <i class="bi bi-plus-circle"></i> 发起维修申请
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if repairs.pages > 1 %}
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if repairs.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('repair.my_repairs', page=repairs.prev_num, status=request.args.get('status')) }}">上一页</a>
+                </li>
+                {% endif %}
+                {% for page in repairs.iter_pages() %}
+                {% if page %}
+                <li class="page-item {% if page == repairs.page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('repair.my_repairs', page=page, status=request.args.get('status')) }}">{{ page }}</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+                {% endfor %}
+                {% if repairs.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('repair.my_repairs', page=repairs.next_num, status=request.args.get('status')) }}">下一页</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

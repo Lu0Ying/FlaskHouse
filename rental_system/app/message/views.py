@@ -32,6 +32,20 @@ def get_auto_reply(message_content):
     return '感谢您的留言！我会尽快回复您。如有紧急问题，请直接电话联系。'
 
 
+def send_message(sender_id, receiver_id, content):
+    """发送消息的辅助函数"""
+    from app.models import Message
+    message = Message(
+        sender_id=sender_id,
+        receiver_id=receiver_id,
+        content=content,
+        type='message'
+    )
+    db.session.add(message)
+    db.session.commit()
+    return message
+
+
 @bp.route('/')
 @login_required
 def index():
@@ -105,8 +119,10 @@ def send():
         flash('消息发送成功', 'success')
         return redirect(url_for('message.sent'))
 
-    # 从 URL 参数获取预填充邮箱
+    # 从 URL 参数获取预填充邮箱（支持两种参数名）
     receiver_email = request.args.get('receiver_email', '').strip()
+    if not receiver_email:
+        receiver_email = request.args.get('reply_to_email', '').strip()
     reply_to_user = None
     if receiver_email:
         reply_to_user = User.query.filter_by(email=receiver_email).first()

@@ -34,7 +34,12 @@ def login():
             login_user(user, remember=remember)
             log_action('用户登录成功', user_id=user.id, details={'email': email, 'remember': remember})
             next_page = request.args.get('next')
-            return redirect(next_page) if next_page else redirect(url_for('house.index'))
+            if next_page:
+                return redirect(next_page)
+            elif user.is_landlord():
+                return redirect(url_for('user.my_houses'))
+            else:
+                return redirect(url_for('house.index'))
         else:
             flash('邮箱或密码错误', 'danger')
             log_action('用户登录失败-密码错误', details={'email': email})

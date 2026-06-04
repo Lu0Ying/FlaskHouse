@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% block title %}处理维修申请{% endblock %}
+{% block extra_css %}
+<style>
+.media-preview {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+.media-preview img,
+.media-preview video {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    display: block;
+}
+.media-preview .video-badge {
+    position: absolute;
+    bottom: 4px;
+    left: 4px;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    font-size: 11px;
+    padding: 1px 6px;
+    border-radius: 4px;
+}
+</style>
+{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 class="mb-0"><i class="bi bi-tools"></i> 处理维修申请 #{{ repair.id }}</h4>
+                <a href="{% if current_user.is_admin() %}{{ url_for('repair.all_repairs') }}{% else %}{{ url_for('repair.landlord_repairs') }}{% endif %}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left"></i> 返回
+                </a>
+            </div>
+            <div class="card-body">
+                <!-- 房源信息 -->
+                <div class="mb-4">
+                    <h5 class="border-bottom pb-2">房源信息</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-2">
+                                <strong><i class="bi bi-house"></i> 房源：</strong>
+                                <a href="{{ url_for('house.detail', id=repair.house_id) }}">{{ repair.house.title }}</a>
+                            </p>
+                            <p class="mb-2">
+                                <strong><i class="bi bi-geo-alt"></i> 地址：</strong>
+                                {{ repair.house.address }}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-2">
+                                <strong><i class="bi bi-person"></i> 租客：</strong>
+                                {{ repair.tenant.username }}
+                            </p>
+                            {% if repair.tenant.phone %}
+                            <p class="mb-2">
+                                <strong><i class="bi bi-telephone"></i> 租客电话：</strong>
+                                {{ repair.tenant.phone }}
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 维修状态 -->
+                <div class="mb-4">
+                    <h5 class="border-bottom pb-2">当前状态</h5>
+                    <div class="d-flex align-items-center">
+                        {% if repair.status == 'pending' %}
+                        <span class="badge bg-warning fs-6 me-3">待处理</span>
+                        {% elif repair.status == 'processing' %}
+                        <span class="badge bg-info fs-6 me-3">处理中</span>
+                        {% elif repair.status == 'completed' %}
+                        <span class="badge bg-success fs-6 me-3">已完成</span>
+                        {% elif repair.status == 'rejected' %}
+                        <span class="badge bg-danger fs-6 me-3">已拒绝</span>
+                        {% else %}
+                        <span class="badge bg-secondary fs-6">{{ repair.status }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- 维修描述 -->
+                <div class="mb-4">
+                    <h5 class="border-bottom pb-2">维修描述</h5>
+                    <div class="p-3 bg-light rounded">
+                        {{ repair.description }}
+                    </div>
+                </div>
+
+                <!-- 维修照片/视频 -->
+                {% if repair.images and repair.images != '[]' %}
+                <div class="mb-4">
+                    <h5 class="border-bottom pb-2">维修照片/视频</h5>
+                    <div class="row g-2">
+                        {% set media_list = repair.images | load_json %}
+                        {% for media in media_list %}
+                        <div class="col-4 col-md-3">
+                            <div class="media-preview">
+                                {% if media.endswith('.mp4') %}
+                                <video src="/static/{{ media }}" controls></video>
+                                <span class="video-badge"><i class="bi bi-camera-video me-1"></i>视频</span>
+                                {% else %}
+                                <img src="/static/{{ media }}" alt="维修照片" class="cursor-pointer" onclick="window.open('/static/{{ media }}', '_blank')">
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- 提交时间 -->
+                <div class="mb-4">
+                    <h5 class="border-bottom pb-2">提交时间</h5>
+                    <p class="mb-0">
+                        <i class="bi bi-calendar-plus"></i> 
+                        {{ repair.created_at.strftime('%Y-%m-%d %H:%M:%S') }}
+                    </p>
+                    {% if repair.resolved_at %}
+                    <p class="text-muted mt-2 mb-0">
+                        <i class="bi bi-check-circle"></i> 处理时间：{{ repair.resolved_at.strftime('%Y-%m-%d %H:%M') }}
+                    </p>
+                    {% endif %}
+                </div>
+
+                <!-- 处理操作 -->
+                {% if repair.status in ['pending', 'processing'] %}
+                <div class="mb-4">
+                    <h5 class="border-bottom pb-2">处理操作</h5>
+                    <form method="POST" class="d-grid gap-2">
+                        {% if repair.status == 'pending' %}
+                        <button type="submit" name="action" value="accept" class="btn btn-primary btn-lg">
+                            <i class="bi bi-check-circle"></i> 接受并开始处理
+                        </button>
+                        {% else %}
+                        <button type="submit" name="action" value="complete" class="btn btn-success btn-lg">
+                            <i class="bi bi-check-all"></i> 标记为已完成
+                        </button>
+                        {% endif %}
+                        <button type="submit" name="action" value="reject" class="btn btn-outline-danger">
+                            <i class="bi bi-x-circle"></i> 拒绝维修申请
+                        </button>
+                    </form>
+                </div>
+                {% elif repair.status == 'completed' %}
+                <div class="alert alert-success">
+                    <i class="bi bi-check-circle"></i> 此维修申请已处理完成
+                </div>
+                {% elif repair.status == 'rejected' %}
+                <div class="alert alert-danger">
+                    <i class="bi bi-x-circle"></i> 此维修申请已被拒绝
+                </div>
+                {% endif %}
+
+                <div class="d-grid">
+                    {% if current_user.is_admin() %}
+                    <a href="{{ url_for('repair.all_repairs') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> 返回列表
+                    </a>
+                    {% else %}
+                    <a href="{{ url_for('repair.landlord_repairs') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> 返回列表
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
