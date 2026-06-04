@@ -1,0 +1,15 @@
+.region-selector {
+  position: relative;
+}
+
+.region-selector .dropdown-menu {
+  display: none;
+}
+
+.region-selector .dropdown-menu.show {
+  display: block;
+}
+
+.region-selector .invalid-feedback {
+  display: block;
+}
