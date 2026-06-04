@@ -191,7 +191,7 @@ def dashboard():
         return redirect(url_for('stats.tenant_dashboard'))
 
 
-@bp.route('/view/<int:id>')
+@bp.route('/view/<int:id>', methods=['GET', 'POST'])
 @login_required
 def view(id):
     user = User.query.get_or_404(id)

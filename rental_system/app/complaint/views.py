@@ -112,7 +112,7 @@ def create():
         db.session.add(complaint)
         db.session.commit()
 
-        log_action('提交投诉', user_id=current_user.id, details={'complaint_id': complaint.id, 'house_id': house_id, 'target_type': target_type})
+        log_action('提交投诉', user_id=current_user.id, details={'complaint_id': complaint.id, 'house_id': house_id, 'category': category})
         flash('投诉已提交，我们会尽快处理', 'success')
         return redirect(url_for('complaint.my_complaints'))
 
