@@ -6,47 +6,95 @@
 
 <h2 class="mb-3">最新房源</h2>
 
-<div class="row">
-    {% for house in houses.items %}
-    <div class="col-md-4 mb-4">
-        <div class="card house-card h-100">
-            {% if house.get_images_list() %}
-                <img src="{{ url_for('static', filename=house.get_images_list()[0]) }}" class="card-img-top" alt="{{ house.title }}" style="height: 200px; object-fit: cover;">
-            {% else %}
-                <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" style="height: 200px;">
-                    <i class="fas fa-image text-white fa-3x"></i>
+<div class="mx-auto px-4" style="width: 70%;">
+    <div class="row">
+    {% if current_user.is_authenticated %}
+        {% for house in houses.items %}
+        <div class="col-md-4 mb-4">
+            <div class="card house-card h-100">
+                {% if house.get_images_list() %}
+                    <img src="{{ url_for('static', filename=house.get_images_list()[0]) }}" class="card-img-top" alt="{{ house.title }}" style="height: 200px; object-fit: cover;">
+                {% else %}
+                    <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" style="height: 200px;">
+                        <i class="fas fa-image text-white fa-3x"></i>
+                    </div>
+                {% endif %}
+                
+                <div class="card-body">
+                    <h5 class="card-title">{{ house.title }}</h5>
+                    <p class="card-text text-muted">
+                        <i class="fas fa-map-marker-alt"></i> {{ house.district }}
+                    </p>
+                    <p class="card-text">
+                        {{ house.room_count }} · {{ house.size }}㎡
+                    </p>
+                    <h6 class="text-primary">¥{{ house.rent_price }}/月</h6>
                 </div>
-            {% endif %}
-            
-            <div class="card-body">
-                <h5 class="card-title">{{ house.title }}</h5>
-                <p class="card-text text-muted">
-                    <i class="fas fa-map-marker-alt"></i> {{ house.district }}
-                </p>
-                <p class="card-text">
-                    {{ house.room_count }} · {{ house.size }}㎡
-                </p>
-                <h6 class="text-primary">¥{{ house.rent_price }}/月</h6>
-            </div>
-            
-            <div class="card-footer bg-transparent">
-                <a href="{{ url_for('house.detail', id=house.id) }}" class="btn btn-outline-primary w-100">
-                    查看详情
-                </a>
+                
+                <div class="card-footer bg-transparent">
+                    <a href="{{ url_for('house.detail', id=house.id) }}" class="btn btn-outline-primary w-100">
+                        查看详情
+                    </a>
+                </div>
             </div>
         </div>
-    </div>
+        {% else %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> 暂无房源信息
+            </div>
+        </div>
+        {% endfor %}
     {% else %}
-    <div class="col-12">
-        <div class="alert alert-info">
-            <i class="fas fa-info-circle"></i> 暂无房源信息
+        {% for house in houses %}
+        <div class="col-md-4 mb-4">
+            <div class="card house-card h-100">
+                {% if house.get_images_list() %}
+                    <img src="{{ url_for('static', filename=house.get_images_list()[0]) }}" class="card-img-top" alt="{{ house.title }}" style="height: 200px; object-fit: cover;">
+                {% else %}
+                    <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" style="height: 200px;">
+                        <i class="fas fa-image text-white fa-3x"></i>
+                    </div>
+                {% endif %}
+                
+                <div class="card-body">
+                    <h5 class="card-title">{{ house.title }}</h5>
+                    <p class="card-text text-muted">
+                        <i class="fas fa-map-marker-alt"></i> {{ house.district }}
+                    </p>
+                    <p class="card-text">
+                        {{ house.room_count }} · {{ house.size }}㎡
+                    </p>
+                    <h6 class="text-primary">¥{{ house.rent_price }}/月</h6>
+                </div>
+                
+                <div class="card-footer bg-transparent">
+                    <a href="{{ url_for('house.detail', id=house.id) }}" class="btn btn-outline-primary w-100">
+                        查看详情
+                    </a>
+                </div>
+            </div>
         </div>
+        {% else %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> 暂无房源信息
+            </div>
+        </div>
+        {% endfor %}
+        
+        <!-- 未登录时显示"查看更多"按钮 -->
+        <div class="col-12 text-center mt-6">
+            <a href="{{ url_for('auth.login') }}" class="view-more-link">
+                <i class="fas fa-arrow-right"></i> 查看更多，请先登录
+            </a>
+        </div>
+    {% endif %}
     </div>
-    {% endfor %}
 </div>
 
-<!-- 分页 -->
-{% if houses.pages > 1 %}
+<!-- 分页 - 仅登录用户显示 -->
+{% if current_user.is_authenticated and houses.pages > 1 %}
 <nav aria-label="Page navigation">
     <ul class="pagination justify-content-center">
         {% for page_num in houses.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}

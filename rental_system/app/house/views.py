@@ -8,7 +8,15 @@ from app.models import *
 def index():
     page = request.args.get('page', 1, type=int)
     # 只显示状态为可租的房源
-    houses = House.query.filter_by(status='available').order_by(House.created_at.desc()).paginate(page=page, per_page=10)
+    query = House.query.filter_by(status='available').order_by(House.created_at.desc())
+    
+    # 用户未登录时只显示前6个房源，登录后显示全部（分页）
+    if current_user.is_authenticated:
+        houses = query.paginate(page=page, per_page=10)
+    else:
+        # 未登录时只取前6条，不分页
+        houses = query.limit(6).all()
+    
     return render_template('house/index.html', houses=houses)
 
 @bp.route('/<int:id>')
