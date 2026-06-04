@@ -46,12 +46,12 @@ def landlord_complaints():
         return redirect(url_for('house.index'))
 
     page = request.args.get('page', 1, type=int)
-    status = request.args.get('status', '')
 
     house_ids = [h.id for h in House.query.filter_by(landlord_id=current_user.id).all()]
-    query = Complaint.query.filter(Complaint.house_id.in_(house_ids))
-    if status:
-        query = query.filter_by(status=status)
+    query = Complaint.query.filter(
+        Complaint.house_id.in_(house_ids),
+        Complaint.status == 'approved'
+    )
 
     complaints = query.order_by(Complaint.created_at.desc()).paginate(page=page, per_page=10)
     return render_template('complaint/landlord_complaints.html', complaints=complaints)
