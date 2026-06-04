@@ -4,6 +4,7 @@ from datetime import datetime
 from app import db
 from app.news import bp
 from app.models import News
+from app.utils import log_action
 
 
 @bp.route('/')
@@ -58,6 +59,7 @@ def create():
         db.session.add(news)
         db.session.commit()
 
+        log_action('创建新闻', user_id=current_user.id, details={'news_id': news.id, 'title': title, 'status': news.status})
         flash('新闻发布成功' if action == 'publish' else '草稿已保存', 'success')
         return redirect(url_for('news.my_news'))
 
@@ -103,6 +105,7 @@ def edit(id):
             news.published_at = datetime.now()
 
         db.session.commit()
+        log_action('编辑新闻', user_id=current_user.id, details={'news_id': news.id, 'title': news.title})
         flash('修改已保存', 'success')
         return redirect(url_for('news.my_news'))
 
@@ -118,6 +121,7 @@ def delete(id):
         flash('无权删除此文章', 'danger')
         return redirect(url_for('news.my_news'))
 
+    log_action('删除新闻', user_id=current_user.id, details={'news_id': news.id, 'title': news.title})
     db.session.delete(news)
     db.session.commit()
     flash('已删除', 'success')
@@ -136,6 +140,7 @@ def publish(id):
     news.status = 'published'
     news.published_at = datetime.now()
     db.session.commit()
+    log_action('发布新闻', user_id=current_user.id, details={'news_id': news.id, 'title': news.title})
     flash('文章已发布', 'success')
     return redirect(url_for('news.my_news'))
 
@@ -151,5 +156,6 @@ def archive(id):
 
     news.status = 'archived'
     db.session.commit()
+    log_action('归档新闻', user_id=current_user.id, details={'news_id': news.id, 'title': news.title})
     flash('文章已归档', 'success')
     return redirect(url_for('news.my_news'))

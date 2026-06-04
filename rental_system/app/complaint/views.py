@@ -6,6 +6,7 @@ from app import db
 from app.complaint import bp
 from app.models import Complaint, House, LeaseContract, Appointment, RentPayment
 from app.utils.file_upload import save_upload_file, delete_file
+from app.utils import log_action
 
 
 @bp.route('/')
@@ -111,6 +112,7 @@ def create():
         db.session.add(complaint)
         db.session.commit()
 
+        log_action('提交投诉', user_id=current_user.id, details={'complaint_id': complaint.id, 'house_id': house_id, 'target_type': target_type})
         flash('投诉已提交，我们会尽快处理', 'success')
         return redirect(url_for('complaint.my_complaints'))
 
@@ -170,6 +172,7 @@ def process(id):
             complaint.status = 'approved'
             complaint.response = response
             complaint.resolved_at = datetime.now()
+            log_action('通过投诉', user_id=current_user.id, details={'complaint_id': complaint.id, 'house_id': complaint.house_id})
             flash('投诉已通过处理', 'success')
         elif action == 'reject':
             reject_reason = request.form.get('reject_reason', '').strip()
@@ -180,6 +183,7 @@ def process(id):
             complaint.response = response
             complaint.reject_reason = reject_reason
             complaint.resolved_at = datetime.now()
+            log_action('驳回投诉', user_id=current_user.id, details={'complaint_id': complaint.id, 'house_id': complaint.house_id})
             flash('投诉已驳回', 'success')
 
         db.session.commit()

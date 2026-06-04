@@ -4,6 +4,7 @@ from datetime import datetime
 from app import db
 from app.repair import bp
 from app.models import RepairRequest, House, LeaseContract
+from app.utils import log_action
 
 
 @bp.route('/')
@@ -101,6 +102,7 @@ def create():
         db.session.add(repair)
         db.session.commit()
 
+        log_action('提交维修申请', user_id=current_user.id, details={'repair_id': repair.id, 'house_id': house_id})
         flash('维修申请已提交，请等待处理', 'success')
         return redirect(url_for('repair.my_repairs'))
 
@@ -152,14 +154,17 @@ def process(id):
 
         if action == 'accept':
             repair.status = 'processing'
+            log_action('接受维修申请', user_id=current_user.id, details={'repair_id': repair.id, 'house_id': repair.house_id})
             flash('已接受维修申请，正在处理中', 'success')
         elif action == 'complete':
             repair.status = 'completed'
             repair.resolved_at = datetime.now()
+            log_action('完成维修申请', user_id=current_user.id, details={'repair_id': repair.id, 'house_id': repair.house_id})
             flash('维修已完成', 'success')
         elif action == 'reject':
             repair.status = 'rejected'
             repair.resolved_at = datetime.now()
+            log_action('拒绝维修申请', user_id=current_user.id, details={'repair_id': repair.id, 'house_id': repair.house_id})
             flash('已拒绝维修申请', 'success')
 
         db.session.commit()
@@ -181,6 +186,7 @@ def cancel(id):
         flash('当前状态不允许取消', 'danger')
         return redirect(url_for('repair.my_repairs'))
 
+    log_action('取消维修申请', user_id=current_user.id, details={'repair_id': repair.id, 'house_id': repair.house_id})
     db.session.delete(repair)
     db.session.commit()
 

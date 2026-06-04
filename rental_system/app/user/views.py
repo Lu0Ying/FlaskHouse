@@ -3,6 +3,8 @@ from flask_login import login_required, current_user
 from datetime import datetime
 from app import db
 from app.user import bp
+from app.models import User, House, LeaseContract, Appointment, RepairRequest, Message
+from app.utils import log_action
 from app.models import User, House, LeaseContract, Appointment, RepairRequest, Message, HouseMedia
 
 
@@ -23,6 +25,7 @@ def profile():
             current_user.phone = request.form.get('phone', '').strip()
             current_user.id_card = request.form.get('id_card', '').strip()
             db.session.commit()
+            log_action('更新个人信息', user_id=current_user.id, details={'username': current_user.username})
             flash('个人信息已更新', 'success')
 
         elif action == 'password':
@@ -44,6 +47,7 @@ def profile():
 
             current_user.set_password(new_password)
             db.session.commit()
+            log_action('修改密码', user_id=current_user.id, details={'username': current_user.username})
             flash('密码已修改', 'success')
 
     return render_template('user/profile.html', user=current_user)
@@ -194,4 +198,24 @@ def view(id):
     if current_user.id != user.id and not current_user.is_admin():
         flash('您无权查看此用户信息', 'danger')
         return redirect(url_for('user.profile'))
+    if request.method == 'POST':
+        # 只有管理员可以修改用户信息
+        if not current_user.is_admin():
+            flash('只有管理员可以修改用户信息', 'danger')
+            return redirect(url_for('user.view', id=id))
+        
+        # 更新用户信息
+        user.username = request.form.get('username', '').strip()
+        user.email = request.form.get('email', '').strip()
+        user.real_name = request.form.get('real_name', '').strip()
+        user.phone = request.form.get('phone', '').strip()
+        user.id_card = request.form.get('id_card', '').strip()
+        user.role = request.form.get('role', 'tenant')
+        user.status = request.form.get('status', 'active')
+        
+        db.session.commit()
+        log_action('管理员编辑用户', user_id=current_user.id, details={'target_user_id': user.id, 'username': user.username, 'role': user.role, 'status': user.status})
+        flash('用户信息已更新', 'success')
+        return redirect(url_for('user.view', id=id))
+    
     return render_template('user/view.html', user=user)
