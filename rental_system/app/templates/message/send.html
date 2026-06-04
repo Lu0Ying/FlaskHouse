@@ -1,5 +1,186 @@
 {% extends "base.html" %}
-{% block title %}Page{% endblock %}
+{% block title %}消息中心{% endblock %}
 {% block content %}
-<h1>Page Title</h1>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-envelope"></i> 消息中心</h2>
+    <div class="btn-group" role="group">
+        <a href="{{ url_for('message.inbox') }}" class="btn btn-outline-secondary">收件箱</a>
+        <a href="{{ url_for('message.sent') }}" class="btn btn-outline-secondary">已发送</a>
+        <a href="{{ url_for('message.send') }}" class="btn btn-primary">
+            <i class="bi bi-pencil"></i> 发送消息
+        </a>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="bi bi-envelope"></i> {% if reply_to_user %}回复消息{% else %}发送消息{% endif %}</h4>
+            </div>
+            <div class="card-body">
+                <form id="sendMessageForm" action="{{ url_for('message.send') }}" method="POST">
+                    <!-- 接收方邮箱输入 -->
+                    <div class="mb-3">
+                        <label for="receiver_email" class="form-label">接收方邮箱 <span class="text-danger">*</span></label>
+                        <input type="email" class="form-control" id="receiver_email" name="receiver_email" 
+                               placeholder="请输入接收方的邮箱地址" required
+                               {% if reply_to_email %}value="{{ reply_to_email }}"{% endif %}>
+                        <div id="email_error" class="text-danger small mt-1" style="display: none;">
+                            <i class="bi bi-exclamation-circle"></i> 找不到该邮箱对应的用户
+                        </div>
+                        <div id="email_success" class="text-success small mt-1" style="display: none;">
+                            <i class="bi bi-check-circle"></i> 已找到用户
+                        </div>
+                    </div>
+                    
+                    <!-- 接收方姓名 -->
+                    <div class="mb-3">
+                        <label for="receiver_name" class="form-label">接收方姓名</label>
+                        <input type="text" class="form-control" id="receiver_name" 
+                               placeholder="输入邮箱后自动显示" readonly disabled
+                               {% if reply_to_user %}
+                               value="{{ reply_to_user.real_name or reply_to_user.username or '对方暂未透露' }}"
+                               {% endif %}>
+                    </div>
+                    
+                    <!-- 接收方身份（自动填充，不可修改） -->
+                    <div class="mb-3">
+                        <label for="receiver_role" class="form-label">接收方身份</label>
+                        <input type="text" class="form-control" id="receiver_role" 
+                               placeholder="输入邮箱后自动显示" readonly disabled
+                               {% if reply_to_user %}
+                               value="{% if reply_to_user.role == 'landlord' %}房东{% elif reply_to_user.role == 'tenant' %}租客{% elif reply_to_user.role == 'admin' %}管理员{% else %}{{ reply_to_user.role }}{% endif %}"
+                               {% endif %}>
+                        <input type="hidden" id="receiver_id" name="receiver_id">
+                    </div>
+                    
+                    <!-- 消息内容 -->
+                    <div class="mb-3">
+                        <label for="content" class="form-label">消息内容 <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="content" name="content" rows="5" 
+                                  placeholder="请输入消息内容..." required></textarea>
+                    </div>
+                    
+                    <!-- 发送按钮 -->
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary" id="sendBtn" disabled>
+                            <i class="bi bi-send"></i> 发送消息
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const emailInput = document.getElementById('receiver_email');
+    const nameInput = document.getElementById('receiver_name');
+    const roleInput = document.getElementById('receiver_role');
+    const receiverIdInput = document.getElementById('receiver_id');
+    const emailError = document.getElementById('email_error');
+    const emailSuccess = document.getElementById('email_success');
+    const sendBtn = document.getElementById('sendBtn');
+    const contentInput = document.getElementById('content');
+    
+    let validReceiver = false;
+    
+    // 验证邮箱的函数
+    function validateEmail(email) {
+        if (!email || email.trim() === '') {
+            resetFields();
+            return;
+        }
+        
+        fetch(`/message/api/check_email?email=${encodeURIComponent(email)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.exists) {
+                    // 找到用户
+                    emailInput.classList.remove('is-invalid');
+                    emailInput.classList.add('is-valid');
+                    emailError.style.display = 'none';
+                    emailSuccess.style.display = 'block';
+                    
+                    // 显示用户姓名和身份
+                    nameInput.value = data.display_name;
+                    roleInput.value = data.role_display;
+                    receiverIdInput.value = data.user_id;
+                    
+                    validReceiver = true;
+                    checkFormValidity();
+                } else {
+                    // 未找到用户
+                    emailInput.classList.remove('is-valid');
+                    emailInput.classList.add('is-invalid');
+                    emailError.style.display = 'block';
+                    emailSuccess.style.display = 'none';
+                    
+                    nameInput.value = '';
+                    roleInput.value = '';
+                    receiverIdInput.value = '';
+                    
+                    validReceiver = false;
+                    checkFormValidity();
+                }
+            })
+            .catch(error => {
+                console.error('验证邮箱时出错:', error);
+                resetFields();
+            });
+    }
+    
+    // 重置字段
+    function resetFields() {
+        emailInput.classList.remove('is-valid', 'is-invalid');
+        emailError.style.display = 'none';
+        emailSuccess.style.display = 'none';
+        nameInput.value = '';
+        roleInput.value = '';
+        receiverIdInput.value = '';
+        validReceiver = false;
+        checkFormValidity();
+    }
+    
+    // 检查表单有效性
+    function checkFormValidity() {
+        const contentValid = contentInput.value.trim() !== '';
+        sendBtn.disabled = !(validReceiver && contentValid);
+    }
+    
+    // 邮箱输入事件（使用防抖）
+    let debounceTimer;
+    emailInput.addEventListener('input', function() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            validateEmail(emailInput.value);
+        }, 500);
+    });
+    
+    // 内容输入事件
+    contentInput.addEventListener('input', checkFormValidity);
+    
+    // 表单提交前验证
+    document.getElementById('sendMessageForm').addEventListener('submit', function(e) {
+        if (!validReceiver) {
+            e.preventDefault();
+            emailInput.focus();
+            return false;
+        }
+        
+        if (contentInput.value.trim() === '') {
+            e.preventDefault();
+            contentInput.focus();
+            return false;
+        }
+    });
+    
+    // 如果有预填充的邮箱，立即验证
+    {% if reply_to_email %}
+    validateEmail('{{ reply_to_email }}');
+    {% endif %}
+});
+</script>
 {% endblock %}

@@ -78,52 +78,82 @@ def sent():
 @login_required
 def send():
     if request.method == 'POST':
-        receiver_id = request.form.get('receiver_id', type=int)
+        receiver_email = request.form.get('receiver_email', '').strip()
         content = request.form.get('content', '').strip()
-        house_id = request.form.get('house_id', type=int)
 
-        if not receiver_id or not content:
-            flash('请选择收件人并填写消息内容', 'danger')
+        if not receiver_email or not content:
+            flash('请填写收件人邮箱并输入消息内容', 'danger')
             return redirect(url_for('message.send'))
 
-        receiver = User.query.get(receiver_id)
+        receiver = User.query.filter_by(email=receiver_email).first()
         if not receiver:
-            flash('收件人不存在', 'danger')
+            flash('找不到该邮箱对应的用户', 'danger')
+            return redirect(url_for('message.send'))
+
+        if receiver.id == current_user.id:
+            flash('不能给自己发送消息', 'danger')
             return redirect(url_for('message.send'))
 
         message = Message(
             sender_id=current_user.id,
-            receiver_id=receiver_id,
+            receiver_id=receiver.id,
             content=content,
             type='message'
         )
         db.session.add(message)
-
-        if house_id:
-            reply_content = get_auto_reply(content)
-            auto_message = Message(
-                sender_id=receiver_id,
-                receiver_id=current_user.id,
-                content=f'【智能回复】{reply_content}',
-                type='notification'
-            )
-            db.session.add(auto_message)
-
         db.session.commit()
         flash('消息发送成功', 'success')
         return redirect(url_for('message.sent'))
 
-    users = User.query.filter(User.id != current_user.id).all()
-    houses = House.query.filter_by(landlord_id=current_user.id).all() if current_user.is_landlord() else []
-    return render_template('message/send.html', users=users, houses=houses)
+    # 从 URL 参数获取预填充邮箱
+    receiver_email = request.args.get('receiver_email', '').strip()
+    reply_to_user = None
+    if receiver_email:
+        reply_to_user = User.query.filter_by(email=receiver_email).first()
+    
+    return render_template('message/send.html', reply_to_email=receiver_email, reply_to_user=reply_to_user)
 
 
 @bp.route('/reply/<int:user_id>', methods=['GET'])
 @login_required
 def reply(user_id):
     user = User.query.get_or_404(user_id)
-    users = [user]
-    return render_template('message/send.html', users=users, reply_to=user)
+    return render_template('message/send.html', reply_to_email=user.email, reply_to_user=user)
+
+
+@bp.route('/api/check_email')
+@login_required
+def check_email():
+    """验证邮箱是否存在并返回用户信息"""
+    email = request.args.get('email', '').strip()
+    
+    if not email:
+        return jsonify({'exists': False})
+    
+    user = User.query.filter_by(email=email).first()
+    
+    if user:
+        if user.id == current_user.id:
+            return jsonify({'exists': False, 'error': '不能给自己发消息'})
+        
+        role_display = {
+            'landlord': '房东',
+            'tenant': '租客',
+            'admin': '管理员'
+        }
+        # 获取用户姓名，优先显示 real_name，如果为空则显示 username，如果都没有则显示占位文案
+        display_name = user.real_name or user.username or '对方暂未透露'
+        return jsonify({
+            'exists': True,
+            'user_id': user.id,
+            'username': user.username,
+            'real_name': user.real_name,
+            'display_name': display_name,
+            'role': user.role,
+            'role_display': role_display.get(user.role, user.role)
+        })
+    
+    return jsonify({'exists': False})
 
 
 @bp.route('/view/<int:id>')
@@ -139,9 +169,17 @@ def view(id):
         message.read_status = True
         db.session.commit()
 
+    # 确定对话的另一方用户
+    # 如果是我收到的消息，另一方是发送者；如果是，我发送的消息，另一方是接收者
+    if message.receiver_id == current_user.id:
+        other_user_id = message.sender_id
+    else:
+        other_user_id = message.receiver_id
+
+    # 查询我和这个另一方之间的所有消息
     conversation = Message.query.filter(
-        ((Message.sender_id == current_user.id) & (Message.receiver_id == message.sender_id)) |
-        ((Message.sender_id == message.sender_id) & (Message.receiver_id == current_user.id))
+        ((Message.sender_id == current_user.id) & (Message.receiver_id == other_user_id)) |
+        ((Message.sender_id == other_user_id) & (Message.receiver_id == current_user.id))
     ).order_by(Message.created_at.asc()).all()
 
     return render_template('message/view.html', message=message, conversation=conversation)

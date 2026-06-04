@@ -76,7 +76,7 @@
                 </div>
                 
                 <div class="row mb-3">
-                    <div class="col-6">
+                    <div class="col-6">：
                         <div class="text-muted small">押金</div>
                         <div>¥{{ house.deposit }}</div>
                     </div>
@@ -107,6 +107,9 @@
                        class="btn btn-success">
                         <i class="bi bi-file-text"></i> 租房申请
                     </a>
+                    <button type="button" class="btn btn-info text-white" data-bs-toggle="modal" data-bs-target="#contactLandlordModal">
+                        <i class="bi bi-chat-dots"></i> 联系房东
+                    </button>
                     {% else %}
                     <button class="btn btn-secondary" disabled>
                         <i class="bi bi-x-circle"></i> 暂不可租
@@ -130,6 +133,42 @@
         </div>
     </div>
 </div>
+
+<!-- 联系房东模态框 -->
+{% if current_user.is_authenticated and current_user.is_tenant() %}
+<div class="modal fade" id="contactLandlordModal" tabindex="-1" aria-labelledby="contactLandlordModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="contactLandlordModalLabel">
+                    <i class="bi bi-person-circle"></i> 房东信息
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">房东姓名</label>
+                    <input type="text" class="form-control" value="{{ house.landlord.real_name or '该用户暂未提供该信息' }}" disabled>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">邮箱</label>
+                    <input type="email" class="form-control" value="{{ house.landlord.email }}" disabled>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">电话</label>
+                    <input type="text" class="form-control" value="{{ house.landlord.phone or '该用户暂未提供该信息' }}" disabled>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                <a href="{{ url_for('message.send', receiver_email=house.landlord.email) }}" class="btn btn-primary">
+                    <i class="bi bi-send"></i> 发送消息给房东
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
 
 <!-- 房源描述 -->
 <div class="card mb-4">

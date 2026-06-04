@@ -4,18 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b712e7ee-080a-4e33-8a3a-37d807f269ff" name="更改" comment="导出了我本地的sql文件并替换了它">
+    <list default="true" id="b712e7ee-080a-4e33-8a3a-37d807f269ff" name="更改" comment="修复了租金计算的逻辑bug，更新了数据库。">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/rental_system/app/lease/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/rental_system/app/lease/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/rental_system/app/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/rental_system/app/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/rental_system/app/message/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/rental_system/app/message/views.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/rental_system/app/templates/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/rental_system/app/templates/base.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/rental_system/app/templates/lease/create_contract_tenant.html" beforeDir="false" afterPath="$PROJECT_DIR$/rental_system/app/templates/lease/create_contract_tenant.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/rental_system/app/templates/lease/payments.html" beforeDir="false" afterPath="$PROJECT_DIR$/rental_system/app/templates/lease/payments.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/rental_system/app/utils/contract.py" beforeDir="false" afterPath="$PROJECT_DIR$/rental_system/app/utils/contract.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/rental_system/init_mysql.sql" beforeDir="false" afterPath="$PROJECT_DIR$/rental_system/init_mysql.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/rental_system/migrate_rejected_status.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rental_system/rental_system.sql" beforeDir="false" afterPath="$PROJECT_DIR$/rental_system/rental_system.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/rental_system/app/templates/house/detail.html" beforeDir="false" afterPath="$PROJECT_DIR$/rental_system/app/templates/house/detail.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/rental_system/app/templates/message/inbox.html" beforeDir="false" afterPath="$PROJECT_DIR$/rental_system/app/templates/message/inbox.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/rental_system/app/templates/message/send.html" beforeDir="false" afterPath="$PROJECT_DIR$/rental_system/app/templates/message/send.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -123,7 +118,10 @@
       <workItem from="1780245702316" duration="2844000" />
       <workItem from="1780391827699" duration="775000" />
       <workItem from="1780403426090" duration="7104000" />
-      <workItem from="1780457664901" duration="19922000" />
+      <workItem from="1780457664901" duration="20244000" />
+      <workItem from="1780555327025" duration="3535000" />
+      <workItem from="1780563043799" duration="5361000" />
+      <workItem from="1780571966510" duration="1412000" />
     </task>
     <task id="LOCAL-00001" summary="项目的初步架构完成">
       <option name="closed" value="true" />
@@ -237,7 +235,15 @@
       <option name="project" value="LOCAL" />
       <updated>1780479678571</updated>
     </task>
-    <option name="localTasksCounter" value="15" />
+    <task id="LOCAL-00015" summary="修复了租金计算的逻辑bug，更新了数据库。">
+      <option name="closed" value="true" />
+      <created>1780501205791</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1780501205791</updated>
+    </task>
+    <option name="localTasksCounter" value="16" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -262,6 +268,7 @@
     <MESSAGE value="基本实现了房东的我的房源的全部功能。" />
     <MESSAGE value="实现了看房预约，租赁合同，租金管理的功能" />
     <MESSAGE value="导出了我本地的sql文件并替换了它" />
-    <option name="LAST_COMMIT_MESSAGE" value="导出了我本地的sql文件并替换了它" />
+    <MESSAGE value="修复了租金计算的逻辑bug，更新了数据库。" />
+    <option name="LAST_COMMIT_MESSAGE" value="修复了租金计算的逻辑bug，更新了数据库。" />
   </component>
 </project>

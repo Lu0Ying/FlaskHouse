@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}消息详情{% endblock %}
+{% block content %}
+<style>
+    .conversation-scroll {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    .conversation-scroll::-webkit-scrollbar {
+        width: 6px;
+    }
+    .conversation-scroll::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 3px;
+    }
+    .conversation-scroll::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 3px;
+    }
+    .msg-other {
+        background-color: #e3f2fd;
+    }
+</style>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0"><i class="bi bi-envelope-open"></i> 消息详情</h4>
+                    {% if message.sender_id == current_user.id %}
+                    <a href="{{ url_for('message.sent') }}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-left"></i> 返回
+                    </a>
+                    {% else %}
+                    <a href="{{ url_for('message.inbox') }}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-left"></i> 返回
+                    </a>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <!-- 消息信息 -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                {% if message.sender_id == current_user.id %}
+                                <span class="badge bg-success">我发送的</span>
+                                <span class="ms-2">发送给: {{ message.receiver.username }}</span>
+                                {% else %}
+                                <span class="badge bg-primary">我收到的</span>
+                                <span class="ms-2">来自: {{ message.sender.username }}</span>
+                                {% endif %}
+                            </div>
+                            <small class="text-muted">{{ message.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                        </div>
+                        
+                        <!-- 消息内容 -->
+                        <div class="card {% if message.sender_id == current_user.id %}bg-light{% else %}msg-other{% endif %} p-3">
+                            <div class="card-body">
+                                <p class="card-text">{{ message.content }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 对话历史 -->
+                    {% if conversation %}
+                    <div class="mt-4">
+                        <h5>对话历史</h5>
+                        <div class="conversation-scroll">
+                            <div class="list-group">
+                                {% for msg in conversation %}
+                                <div class="list-group-item {% if msg.sender_id == current_user.id %}list-group-item-success{% else %}msg-other{% endif %}">
+                                    <div class="d-flex justify-content-between">
+                                        <div class="fw-bold">
+                                            {% if msg.sender_id == current_user.id %}
+                                            <i class="bi bi-person"></i> 我
+                                            {% else %}
+                                            <i class="bi bi-person-circle"></i> {{ msg.sender.username }}
+                                            {% endif %}
+                                        </div>
+                                        <small class="text-muted">{{ msg.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                                    </div>
+                                    <div class="mt-2">{{ msg.content }}</div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- 回复按钮 -->
+                    {% if message.sender_id != current_user.id %}
+                    <div class="mt-4 d-grid">
+                        <a href="{{ url_for('message.reply', user_id=message.sender.id) }}" class="btn btn-primary">
+                            <i class="bi bi-reply"></i> 回复此消息
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

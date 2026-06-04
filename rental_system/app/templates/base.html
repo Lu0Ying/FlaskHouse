@@ -56,6 +56,11 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{{ url_for('lease.payments') }}">租金管理</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('message.inbox') }}">
+                                <i class="bi bi-envelope"></i> 消息中心
+                            </a>
+                        </li>
                         {% endif %}
                     {% endif %}
                 </ul>
@@ -114,12 +119,6 @@
                         <a class="nav-link {% if request.endpoint == 'lease.landlord_appointments' %}active{% endif %}"
                            href="{{ url_for('lease.landlord_appointments') }}">
                             <i class="bi bi-calendar-check"></i> 看房预约
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint == 'news.my_news' %}active{% endif %}"
-                           href="{{ url_for('news.my_news') }}">
-                            <i class="bi bi-newspaper"></i> 新闻管理
                         </a>
                     </li>
                     {% endif %}
