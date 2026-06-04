@@ -4,10 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b712e7ee-080a-4e33-8a3a-37d807f269ff" name="更改" comment="新增了消息中心功能，在租客的房源详情添加了联系房东功能。">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/rental_system/app/templates/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/rental_system/app/templates/base.html" afterDir="false" />
-    </list>
+    <list default="true" id="b712e7ee-080a-4e33-8a3a-37d807f269ff" name="更改" comment="新增了消息中心功能，在租客的房源详情添加了联系房东功能。" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -89,11 +86,6 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <recent_temporary>
-      <list>
-        <item itemvalue="Python.run" />
-      </list>
-    </recent_temporary>
   </component>
   <component name="SharedIndexes">
     <attachedChunks>
