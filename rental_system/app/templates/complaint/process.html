@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}处理投诉 #{{ complaint.id }}{% endblock %}
+{% block content %}
+<h2 class="mb-4"><i class="bi bi-check-circle"></i> 处理投诉 #{{ complaint.id }}</h2>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- 投诉内容 -->
+        <div class="card mb-4">
+            <div class="card-header"><strong>投诉内容</strong></div>
+            <div class="card-body">
+                <p><strong>投诉人：</strong>{{ complaint.tenant.username }}{% if complaint.tenant.phone %} ({{ complaint.tenant.phone }}){% endif %}</p>
+                <p><strong>房源：</strong>{{ complaint.house.title if complaint.house else '-' }}</p>
+                <p><strong>类型：</strong>{{ complaint.get_category_text() }}</p>
+                {% if target_info %}
+                <p><strong>关联目标：</strong>{{ target_info.detail }}</p>
+                {% endif %}
+                <hr>
+                <p>{{ complaint.content }}</p>
+                {% if complaint.get_images_list() %}
+                <hr>
+                <small class="text-muted">附件图片：</small>
+                <div class="mt-2">
+                    {% for img in complaint.get_images_list() %}
+                    <a href="{{ url_for('static', filename=img) }}" target="_blank">
+                        <img src="{{ url_for('static', filename=img) }}" class="img-thumbnail" style="max-width:150px; max-height:150px; object-fit:cover;">
+                    </a>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                <hr>
+                <small class="text-muted">提交时间：{{ complaint.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+            </div>
+        </div>
+
+        <!-- 处理表单 -->
+        <div class="card mb-4">
+            <div class="card-header"><strong>处理投诉</strong></div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label class="form-label"><strong>处理回复（可选）</strong></label>
+                        <textarea name="response" class="form-control" rows="3" placeholder="输入处理意见或回复..."></textarea>
+                    </div>
+
+                    <div id="rejectReasonDiv" class="mb-3" style="display:none;">
+                        <label class="form-label text-danger"><strong>驳回原因（必填）</strong></label>
+                        <textarea name="reject_reason" id="rejectReason" class="form-control" rows="2" placeholder="请说明驳回原因..."></textarea>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" name="action" value="approve" class="btn btn-success btn-lg"
+                                onclick="return confirm('确定要通过此投诉吗？');">
+                            <i class="bi bi-check-lg"></i> 通过
+                        </button>
+                        <button type="button" id="rejectBtn" class="btn btn-danger btn-lg" onclick="showReject()">
+                            <i class="bi bi-x-lg"></i> 驳回
+                        </button>
+                        <a href="{{ url_for('complaint.detail', id=complaint.id) }}" class="btn btn-outline-secondary btn-lg">取消</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header"><strong>当前状态</strong></div>
+            <div class="card-body">
+                <span class="badge bg-warning fs-6">处理中</span>
+                <p class="mt-3">
+                    <i class="bi bi-info-circle"></i>
+                    选择"通过"或"驳回"来处理此投诉。驳回时需填写原因。
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function showReject() {
+    document.getElementById('rejectReasonDiv').style.display = 'block';
+    document.getElementById('rejectReason').setAttribute('required', 'required');
+    document.getElementById('rejectBtn').outerHTML = `
+        <button type="submit" name="action" value="reject" class="btn btn-danger btn-lg"
+                onclick="return confirm('确定要驳回此投诉吗？');">
+            <i class="bi bi-x-lg"></i> 确认驳回
+        </button>`;
+}
+</script>
+{% endblock %}

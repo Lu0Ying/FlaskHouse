@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}投诉详情 #{{ complaint.id }}{% endblock %}
+{% block content %}
+<h2 class="mb-4"><i class="bi bi-exclamation-triangle"></i> 投诉详情 #{{ complaint.id }}</h2>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <strong>投诉内容</strong>
+                <span class="float-end">
+                    {% if complaint.status == 'pending' %}
+                    <span class="badge bg-warning">处理中</span>
+                    {% elif complaint.status == 'approved' %}
+                    <span class="badge bg-success">已通过</span>
+                    {% elif complaint.status == 'rejected' %}
+                    <span class="badge bg-danger">已驳回</span>
+                    {% endif %}
+                </span>
+            </div>
+            <div class="card-body">
+                <p>{{ complaint.content }}</p>
+                {% if complaint.get_images_list() %}
+                <hr>
+                <small class="text-muted">附件图片：</small>
+                <div class="mt-2">
+                    {% for img in complaint.get_images_list() %}
+                    <a href="{{ url_for('static', filename=img) }}" target="_blank">
+                        <img src="{{ url_for('static', filename=img) }}" class="img-thumbnail" style="max-width:150px; max-height:150px; object-fit:cover;">
+                    </a>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if complaint.response or complaint.reject_reason %}
+        <div class="card mb-4">
+            <div class="card-header"><strong>处理结果</strong></div>
+            <div class="card-body">
+                {% if complaint.response %}
+                <p><strong>回复：</strong>{{ complaint.response }}</p>
+                {% endif %}
+                {% if complaint.reject_reason %}
+                <p><strong>驳回原因：</strong><span class="text-danger">{{ complaint.reject_reason }}</span></p>
+                {% endif %}
+                {% if complaint.resolved_at %}
+                <small class="text-muted">处理时间：{{ complaint.resolved_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-header"><strong>基本信息</strong></div>
+            <div class="card-body">
+                <p><strong>投诉人：</strong>{{ complaint.tenant.username }}</p>
+                <p><strong>房源：</strong>
+                    <a href="{{ url_for('house.detail', id=complaint.house_id) }}">{{ complaint.house.title if complaint.house else '-' }}</a>
+                </p>
+                <p><strong>投诉类型：</strong>{{ complaint.get_category_text() }}</p>
+                <p><strong>提交时间：</strong>{{ complaint.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+            </div>
+        </div>
+
+        {% if target_info %}
+        <div class="card mb-3">
+            <div class="card-header"><strong>关联目标</strong></div>
+            <div class="card-body">
+                <p><strong>类型：</strong>{{ target_info.type }}</p>
+                <p><strong>详情：</strong>{{ target_info.detail }}</p>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="d-grid gap-2">
+            {% if complaint.status == 'pending' and (current_user.is_landlord() or current_user.is_admin()) %}
+            <a href="{{ url_for('complaint.process', id=complaint.id) }}" class="btn btn-primary">
+                <i class="bi bi-check-circle"></i> 处理投诉
+            </a>
+            {% endif %}
+            <a href="javascript:history.back()" class="btn btn-outline-secondary">返回</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

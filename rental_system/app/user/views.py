@@ -187,33 +187,11 @@ def dashboard():
         return redirect(url_for('stats.tenant_dashboard'))
 
 
-@bp.route('/view/<int:id>', methods=['GET', 'POST'])
+@bp.route('/view/<int:id>')
 @login_required
 def view(id):
     user = User.query.get_or_404(id)
-    
-    # 检查权限：只能查看自己或管理员可以查看所有用户
     if current_user.id != user.id and not current_user.is_admin():
         flash('您无权查看此用户信息', 'danger')
         return redirect(url_for('user.profile'))
-    
-    if request.method == 'POST':
-        # 只有管理员可以修改用户信息
-        if not current_user.is_admin():
-            flash('只有管理员可以修改用户信息', 'danger')
-            return redirect(url_for('user.view', id=id))
-        
-        # 更新用户信息
-        user.username = request.form.get('username', '').strip()
-        user.email = request.form.get('email', '').strip()
-        user.real_name = request.form.get('real_name', '').strip()
-        user.phone = request.form.get('phone', '').strip()
-        user.id_card = request.form.get('id_card', '').strip()
-        user.role = request.form.get('role', 'tenant')
-        user.status = request.form.get('status', 'active')
-        
-        db.session.commit()
-        flash('用户信息已更新', 'success')
-        return redirect(url_for('user.view', id=id))
-    
     return render_template('user/view.html', user=user)

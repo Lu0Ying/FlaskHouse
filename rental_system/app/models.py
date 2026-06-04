@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import json
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db, login_manager
@@ -301,12 +302,40 @@ class Complaint(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     tenant_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
     house_id = db.Column(db.Integer, db.ForeignKey('houses.id'), nullable=False, index=True)
-    target_type = db.Column(db.String(50))  # 投诉对象类型：landlord/house/service
+    category = db.Column(db.String(20), default='house', index=True)  # 投诉类型：appointment/contract/rent/house
+    target_type = db.Column(db.String(50))  # 保留兼容：landlord/house/service
+    target_id = db.Column(db.Integer, index=True)  # 关联的目标记录ID（预约ID/合同ID/付款ID）
     content = db.Column(db.Text, nullable=False)
-    status = db.Column(db.String(20), default='pending')  # pending/processing/resolved/rejected
+    images = db.Column(db.Text)  # JSON 数组，存储图片路径列表
+    status = db.Column(db.String(20), default='pending', index=True)  # pending/approved/rejected
     response = db.Column(db.Text)  # 处理回复
+    reject_reason = db.Column(db.Text)  # 驳回原因
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), index=True)
     resolved_at = db.Column(db.DateTime)
+    
+    def get_images_list(self):
+        """获取图片路径列表"""
+        if self.images:
+            try:
+                return json.loads(self.images)
+            except (json.JSONDecodeError, TypeError):
+                return []
+        return []
+    
+    def get_status_text(self):
+        """获取状态中文文本"""
+        status_map = {'pending': '处理中', 'approved': '已通过', 'rejected': '已驳回'}
+        return status_map.get(self.status, self.status)
+    
+    def get_category_text(self):
+        """获取分类中文文本"""
+        category_map = {
+            'appointment': '看房预约投诉',
+            'contract': '租赁合同投诉',
+            'rent': '租金管理投诉',
+            'house': '房源投诉'
+        }
+        return category_map.get(self.category, self.category)
     
     def __repr__(self):
         return f'<Complaint {self.id}>'

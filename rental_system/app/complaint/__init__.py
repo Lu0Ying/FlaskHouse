@@ -1,5 +1,5 @@
 from flask import Blueprint
 
-bp = Blueprint('complaint', __name__, url_prefix='/complaint')
+bp = Blueprint('complaint', __name__)
 
 from app.complaint import views

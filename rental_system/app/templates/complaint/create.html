@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+{% block title %}提交投诉{% endblock %}
+{% block extra_css %}
+<style>
+.upload-zone.dragover { background: #e3f2fd !important; border-color: #0d6efd !important; }
+.upload-zone.has-error { border-color: #dc3545 !important; background: #fff5f5 !important; }
+.img-preview-item {
+    position: relative; display: inline-block; margin: 4px;
+    border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+.img-preview-item img { width: 100px; height: 100px; object-fit: cover; display: block; }
+.img-preview-item .remove-btn {
+    position: absolute; top: 0; right: 0;
+    width: 22px; height: 22px; border: none; border-radius: 0 6px 0 6px;
+    background: rgba(220,53,69,0.85); color: #fff; font-size: 12px;
+    line-height: 22px; text-align: center; cursor: pointer;
+}
+</style>
+{% endblock %}
+{% block content %}
+<h2 class="mb-4"><i class="bi bi-exclamation-triangle"></i> 提交投诉</h2>
+
+<form method="POST" id="complaintForm" action="{{ url_for('complaint.create') }}">
+    <!-- 选择房源 -->
+    <div class="card mb-3">
+        <div class="card-header"><strong>1. 选择房源</strong></div>
+        <div class="card-body">
+            <select name="house_id" id="houseSelect" class="form-select" required>
+                <option value="">-- 请选择您租住的房源 --</option>
+                {% for house in houses %}
+                <option value="{{ house.id }}">{{ house.title }} - {{ house.address }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <!-- 选择投诉类型 -->
+    <div class="card mb-3">
+        <div class="card-header"><strong>2. 投诉类型</strong></div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <input type="radio" class="btn-check" name="category" value="house" id="catHouse" autocomplete="off" checked>
+                    <label class="btn btn-outline-primary w-100" for="catHouse">房源投诉</label>
+                </div>
+                <div class="col-md-3">
+                    <input type="radio" class="btn-check" name="category" value="appointment" id="catAppt" autocomplete="off">
+                    <label class="btn btn-outline-primary w-100" for="catAppt">看房预约投诉</label>
+                </div>
+                <div class="col-md-3">
+                    <input type="radio" class="btn-check" name="category" value="contract" id="catContract" autocomplete="off">
+                    <label class="btn btn-outline-primary w-100" for="catContract">租赁合同投诉</label>
+                </div>
+                <div class="col-md-3">
+                    <input type="radio" class="btn-check" name="category" value="rent" id="catRent" autocomplete="off">
+                    <label class="btn btn-outline-primary w-100" for="catRent">租金管理投诉</label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 选择具体投诉对象 -->
+    <div class="card mb-3" id="targetCard" style="display:none;">
+        <div class="card-header"><strong>3. 选择投诉对象</strong></div>
+        <div class="card-body">
+            <select name="target_id" id="targetSelect" class="form-select">
+                <option value="">-- 请选择 --</option>
+            </select>
+            <div id="targetLoading" class="text-muted small mt-1" style="display:none;">加载中...</div>
+        </div>
+    </div>
+
+    <!-- 投诉描述 -->
+    <div class="card mb-3">
+        <div class="card-header"><strong>{% if request.args.get('category') in ('appointment','contract','rent') %}4{% else %}3{% endif %}. 投诉描述</strong></div>
+        <div class="card-body">
+            <textarea name="content" class="form-control" rows="5" placeholder="请详细描述您的投诉内容..." required></textarea>
+        </div>
+    </div>
+
+    <!-- 图片上传 -->
+    <div class="card mb-3">
+        <div class="card-header"><strong>上传图片（可选）</strong></div>
+        <div class="card-body">
+            <div id="dropZone" class="text-center p-3 border border-2 border-dashed rounded"
+                 style="cursor:pointer; background:#f8f9fa;">
+                <i class="bi bi-cloud-upload" style="font-size:2rem; color:#6c757d;"></i>
+                <p class="mt-1 mb-0 text-muted small">拖拽图片或点击上传</p>
+                <input type="file" id="fileInput" accept="image/*" multiple style="display:none;">
+            </div>
+            <div id="previewContainer" class="mt-2"></div>
+            <input type="hidden" name="images" id="imagesInput" value="[]">
+            <div id="uploadError" class="text-danger small mt-1" style="display:none;"></div>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-danger btn-lg">
+        <i class="bi bi-send"></i> 提交投诉
+    </button>
+    <a href="{{ url_for('complaint.my_complaints') }}" class="btn btn-outline-secondary btn-lg">取消</a>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const houseSelect = document.getElementById('houseSelect');
+const categoryRadios = document.querySelectorAll('input[name="category"]');
+const targetCard = document.getElementById('targetCard');
+const targetSelect = document.getElementById('targetSelect');
+const targetLoading = document.getElementById('targetLoading');
+
+function loadTargets() {
+    const category = document.querySelector('input[name="category"]:checked').value;
+    const houseId = houseSelect.value;
+
+    if (category === 'house') {
+        targetCard.style.display = 'none';
+        targetSelect.removeAttribute('required');
+        return;
+    }
+
+    targetCard.style.display = 'block';
+    targetSelect.setAttribute('required', 'required');
+    if (!houseId) {
+        targetSelect.innerHTML = '<option value="">-- 请先选择房源 --</option>';
+        return;
+    }
+
+    targetLoading.style.display = 'block';
+    targetSelect.disabled = true;
+    targetSelect.innerHTML = '<option value="">加载中...</option>';
+
+    fetch(`/complaint/api/targets?category=${category}&house_id=${houseId}`)
+    .then(r => r.json())
+    .then(data => {
+        targetSelect.innerHTML = '<option value="">-- 请选择 --</option>';
+        if (data.targets.length === 0) {
+            targetSelect.innerHTML += '<option value="" disabled>暂无相关记录</option>';
+        } else {
+            data.targets.forEach(t => {
+                targetSelect.innerHTML += `<option value="${t.id}">${t.title}</option>`;
+            });
+        }
+        targetSelect.disabled = false;
+        targetLoading.style.display = 'none';
+    })
+    .catch(() => {
+        targetSelect.innerHTML = '<option value="">加载失败</option>';
+        targetSelect.disabled = false;
+        targetLoading.style.display = 'none';
+    });
+}
+
+categoryRadios.forEach(r => r.addEventListener('change', loadTargets));
+houseSelect.addEventListener('change', loadTargets);
+
+// 图片上传
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const previewContainer = document.getElementById('previewContainer');
+const imagesInput = document.getElementById('imagesInput');
+const uploadError = document.getElementById('uploadError');
+
+dropZone.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', function() {
+    handleFiles(this.files);
+    this.value = '';
+});
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', e => { e.preventDefault(); dropZone.classList.remove('dragover'); });
+dropZone.addEventListener('drop', e => {
+    e.preventDefault(); dropZone.classList.remove('dragover');
+    handleFiles(e.dataTransfer.files);
+});
+
+function handleFiles(files) {
+    for (const file of files) {
+        if (!file || !file.type.startsWith('image/')) continue;
+        if (file.size > 10 * 1024 * 1024) { showError('图片不能超过 10MB'); continue; }
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        fetch('/complaint/api/temp-upload', { method: 'POST', body: formData })
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) { showError(data.message || '上传失败'); return; }
+            addPreview(data.url);
+            hideError();
+        })
+        .catch(() => showError('网络错误'));
+    }
+}
+
+function addPreview(url) {
+    const wrapper = document.createElement('span');
+    wrapper.className = 'img-preview-item';
+    wrapper.innerHTML = `
+        <img src="/static/${url}" alt="preview">
+        <button class="remove-btn" onclick="removePreview(this, '${url}')" type="button">&times;</button>`;
+    previewContainer.appendChild(wrapper);
+
+    const paths = JSON.parse(imagesInput.value || '[]');
+    paths.push(url);
+    imagesInput.value = JSON.stringify(paths);
+}
+
+function removePreview(btn, url) {
+    btn.parentElement.remove();
+    const paths = JSON.parse(imagesInput.value || '[]');
+    imagesInput.value = JSON.stringify(paths.filter(p => p !== url));
+}
+
+function showError(msg) {
+    uploadError.textContent = msg;
+    uploadError.style.display = 'block';
+    setTimeout(() => uploadError.style.display = 'none', 3000);
+}
+function hideError() { uploadError.style.display = 'none'; }
+</script>
+{% endblock %}
