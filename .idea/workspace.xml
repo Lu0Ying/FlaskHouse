@@ -4,17 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b712e7ee-080a-4e33-8a3a-37d807f269ff" name="更改" comment="在租客界面新增了维修申请和投诉申请两个导航">
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
+    <list default="true" id="b712e7ee-080a-4e33-8a3a-37d807f269ff" name="更改" comment="修复了联系房东的功能，实现了维修的功能，优化了ui">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/rental_system/app/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/rental_system/app/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/rental_system/app/auth/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/rental_system/app/auth/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/rental_system/app/message/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/rental_system/app/message/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/rental_system/app/message/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/rental_system/app/message/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/rental_system/app/repair/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/rental_system/app/repair/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/rental_system/app/templates/house/detail.html" beforeDir="false" afterPath="$PROJECT_DIR$/rental_system/app/templates/house/detail.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/rental_system/app/templates/repair/all_repairs.html" beforeDir="false" afterPath="$PROJECT_DIR$/rental_system/app/templates/repair/all_repairs.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/rental_system/rental_system.sql" beforeDir="false" afterPath="$PROJECT_DIR$/rental_system/rental_system.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/rental_system/app/templates/house/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/rental_system/app/templates/house/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/rental_system/app/templates/stats/tenant_dashboard.html" beforeDir="false" afterPath="$PROJECT_DIR$/rental_system/app/templates/stats/tenant_dashboard.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/rental_system/app/templates/user/profile.html" beforeDir="false" afterPath="$PROJECT_DIR$/rental_system/app/templates/user/profile.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -126,7 +120,7 @@
       <workItem from="1780457664901" duration="20244000" />
       <workItem from="1780555327025" duration="3535000" />
       <workItem from="1780563043799" duration="5361000" />
-      <workItem from="1780571966510" duration="12103000" />
+      <workItem from="1780571966510" duration="13837000" />
     </task>
     <task id="LOCAL-00001" summary="项目的初步架构完成">
       <option name="closed" value="true" />
@@ -264,7 +258,15 @@
       <option name="project" value="LOCAL" />
       <updated>1780575059143</updated>
     </task>
-    <option name="localTasksCounter" value="18" />
+    <task id="LOCAL-00018" summary="修复了联系房东的功能，实现了维修的功能，优化了ui">
+      <option name="closed" value="true" />
+      <created>1780587559543</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1780587559543</updated>
+    </task>
+    <option name="localTasksCounter" value="19" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -292,6 +294,7 @@
     <MESSAGE value="修复了租金计算的逻辑bug，更新了数据库。" />
     <MESSAGE value="新增了消息中心功能，在租客的房源详情添加了联系房东功能。" />
     <MESSAGE value="在租客界面新增了维修申请和投诉申请两个导航" />
-    <option name="LAST_COMMIT_MESSAGE" value="在租客界面新增了维修申请和投诉申请两个导航" />
+    <MESSAGE value="修复了联系房东的功能，实现了维修的功能，优化了ui" />
+    <option name="LAST_COMMIT_MESSAGE" value="修复了联系房东的功能，实现了维修的功能，优化了ui" />
   </component>
 </project>

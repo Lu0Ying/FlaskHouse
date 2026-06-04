@@ -115,4 +115,70 @@
         </div>
     </div>
 </div>
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const passwordForm = document.querySelector('#password form');
+    const newPasswordInput = document.querySelector('input[name="new_password"]');
+    const confirmPasswordInput = document.querySelector('input[name="confirm_password"]');
+    
+    if (passwordForm && newPasswordInput && confirmPasswordInput) {
+        // 当确认密码输入时检查一致性
+        confirmPasswordInput.addEventListener('input', function() {
+            validatePasswords();
+        });
+        
+        // 当新密码输入时也检查一致性
+        newPasswordInput.addEventListener('input', function() {
+            if (confirmPasswordInput.value) {
+                validatePasswords();
+            }
+        });
+        
+        // 表单提交前检查
+        passwordForm.addEventListener('submit', function(e) {
+            if (!validatePasswords()) {
+                e.preventDefault();
+                return false;
+            }
+        });
+    }
+    
+    function validatePasswords() {
+        const newPassword = newPasswordInput.value;
+        const confirmPassword = confirmPasswordInput.value;
+        
+        // 移除之前的错误提示
+        newPasswordInput.classList.remove('is-invalid', 'is-valid');
+        confirmPasswordInput.classList.remove('is-invalid', 'is-valid');
+        
+        // 移除可能存在的错误消息
+        let existingError = confirmPasswordInput.parentElement.querySelector('.invalid-feedback');
+        if (existingError) {
+            existingError.remove();
+        }
+        
+        if (newPassword && confirmPassword) {
+            if (newPassword !== confirmPassword) {
+                // 密码不匹配
+                confirmPasswordInput.classList.add('is-invalid');
+                
+                // 添加错误提示
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'invalid-feedback';
+                errorDiv.textContent = '两次输入的密码不一致';
+                confirmPasswordInput.parentElement.appendChild(errorDiv);
+                
+                return false;
+            } else {
+                // 密码匹配
+                confirmPasswordInput.classList.add('is-valid');
+                return true;
+            }
+        }
+        return true;
+    }
+});
+</script>
+{% endblock %}
 {% endblock %}
