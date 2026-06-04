@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from flask import request
 
 
@@ -40,7 +40,7 @@ def log_action(action, user_id=None, details=None, ip=None):
         user_id=user_id,
         ip=ip,
         details=details_str,
-        created_at=datetime.now(timezone.utc)
+        created_at=datetime.now(timezone(timedelta(hours=8)))
     )
     db.session.add(log)
     db.session.commit()
@@ -67,7 +67,7 @@ def record_activity(user_id, action_type, details=None):
         user_id=user_id,
         action_type=action_type,
         details=details_str,
-        timestamp=datetime.now(timezone.utc)
+        timestamp=datetime.now(timezone(timedelta(hours=8)))
     )
     db.session.add(activity)
     db.session.commit()
