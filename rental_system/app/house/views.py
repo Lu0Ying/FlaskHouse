@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from app import db
 from app.house import bp
 from app.models import *
+from app.utils import log_action
 
 @bp.route('/')
 def index():
@@ -52,6 +53,7 @@ def store():
         )
         db.session.add(house)
         db.session.commit()
+        log_action('创建房源', user_id=current_user.id, details={'house_id': house.id, 'title': house.title})
         flash('房源发布成功！', 'success')
         return redirect(url_for('house.detail', id=house.id))
     except Exception as e:
@@ -71,6 +73,7 @@ def delete(id):
         return jsonify({'success': False, 'message': '您无权删除此房源'})
     
     try:
+        log_action('删除房源', user_id=current_user.id, details={'house_id': house.id, 'title': house.title})
         db.session.delete(house)
         db.session.commit()
         return jsonify({'success': True})
@@ -124,6 +127,7 @@ def edit(id):
             house.district_code = request.form.get('district_code', '')
             
             db.session.commit()
+            log_action('更新房源', user_id=current_user.id, details={'house_id': house.id, 'title': house.title})
             flash('房源更新成功！', 'success')
             return redirect(url_for('user.house_detail', id=house.id))
         except Exception as e:

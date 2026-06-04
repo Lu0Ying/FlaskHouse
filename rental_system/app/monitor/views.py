@@ -5,6 +5,7 @@ from sqlalchemy import func
 from app import db
 from app.monitor import bp
 from app.models import SystemLog, UserActivity, User, House, LeaseContract
+from app.utils import log_action, record_activity
 
 
 @bp.route('/')
@@ -121,8 +122,10 @@ def toggle_user_status(id):
         return redirect(url_for('monitor.users'))
 
     user.status = 'inactive' if user.status == 'active' else 'active'
+    new_status = user.status
     db.session.commit()
 
+    log_action('切换用户状态', user_id=current_user.id, details={'target_user_id': user.id, 'username': user.username, 'new_status': new_status})
     flash(f'用户 {user.username} 状态已更新', 'success')
     return redirect(url_for('monitor.users'))
 
@@ -218,22 +221,4 @@ def api_activity_stats():
     return jsonify({'data': data})
 
 
-def log_action(action, user_id=None, details=None, ip=None):
-    log = SystemLog(
-        action=action,
-        user_id=user_id,
-        details=details,
-        ip=ip
-    )
-    db.session.add(log)
-    db.session.commit()
 
-
-def record_activity(user_id, action_type, details=None):
-    activity = UserActivity(
-        user_id=user_id,
-        action_type=action_type,
-        details=details
-    )
-    db.session.add(activity)
-    db.session.commit()

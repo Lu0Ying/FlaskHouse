@@ -4,6 +4,7 @@ from datetime import datetime
 from app import db
 from app.complaint import bp
 from app.models import Complaint, House, LeaseContract
+from app.utils import log_action
 
 
 @bp.route('/')
@@ -112,6 +113,7 @@ def create():
         db.session.add(complaint)
         db.session.commit()
 
+        log_action('提交投诉', user_id=current_user.id, details={'complaint_id': complaint.id, 'house_id': house_id, 'target_type': target_type})
         flash('投诉已提交，我们会尽快处理', 'success')
         return redirect(url_for('complaint.my_complaints'))
 
@@ -166,16 +168,19 @@ def process(id):
             complaint.status = 'processing'
             if response:
                 complaint.response = response
+            log_action('处理投诉', user_id=current_user.id, details={'complaint_id': complaint.id, 'house_id': complaint.house_id})
             flash('投诉正在处理中', 'success')
         elif action == 'resolve':
             complaint.status = 'resolved'
             complaint.response = response
             complaint.resolved_at = datetime.now()
+            log_action('解决投诉', user_id=current_user.id, details={'complaint_id': complaint.id, 'house_id': complaint.house_id})
             flash('投诉已处理完成', 'success')
         elif action == 'reject':
             complaint.status = 'rejected'
             complaint.response = response
             complaint.resolved_at = datetime.now()
+            log_action('驳回投诉', user_id=current_user.id, details={'complaint_id': complaint.id, 'house_id': complaint.house_id})
             flash('投诉已驳回', 'success')
 
         db.session.commit()

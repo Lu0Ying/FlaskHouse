@@ -5,6 +5,7 @@ from app import db
 from app.lease import bp
 from app.models import Appointment, LeaseContract, RentPayment, House, User
 from app.utils.contract import generate_rent_payments
+from app.utils import log_action
 
 
 @bp.context_processor
@@ -98,6 +99,7 @@ def create_appointment(house_id):
         db.session.add(appointment)
         db.session.commit()
 
+        log_action('创建看房预约', user_id=current_user.id, details={'appointment_id': appointment.id, 'house_id': house_id})
         flash('看房预约已提交，请等待房东确认', 'success')
         return redirect(url_for('lease.my_appointments'))
 
@@ -117,6 +119,7 @@ def confirm_appointment(id):
 
     appointment.status = 'confirmed'
     db.session.commit()
+    log_action('确认看房预约', user_id=current_user.id, details={'appointment_id': appointment.id, 'house_id': appointment.house_id})
     flash('已确认看房预约', 'success')
     return redirect(url_for('lease.landlord_appointments'))
 
@@ -132,6 +135,7 @@ def cancel_appointment(id):
 
     appointment.status = 'cancelled'
     db.session.commit()
+    log_action('取消看房预约', user_id=current_user.id, details={'appointment_id': appointment.id, 'house_id': appointment.house_id})
     flash('已取消预约', 'success')
 
     if current_user.is_landlord():
@@ -150,6 +154,7 @@ def complete_appointment(id):
 
     appointment.status = 'completed'
     db.session.commit()
+    log_action('完成看房预约', user_id=current_user.id, details={'appointment_id': appointment.id, 'house_id': appointment.house_id})
     flash('已完成看房', 'success')
     return redirect(url_for('lease.landlord_appointments'))
 
@@ -227,6 +232,7 @@ def create_contract(house_id):
         db.session.add(contract)
         db.session.commit()
 
+        log_action('创建租赁合同', user_id=current_user.id, details={'contract_id': contract.id, 'house_id': house_id, 'tenant_id': tenant_id})
         flash('合同已创建，请等待对方确认签署', 'success')
         return redirect(url_for('lease.contracts'))
 
@@ -303,6 +309,7 @@ def create_contract_tenant(house_id=None):
         db.session.add(contract)
         db.session.commit()
 
+        log_action('租客发起合同申请', user_id=current_user.id, details={'contract_id': contract.id, 'house_id': house_id})
         flash('合同申请已提交，请等待房东审批', 'success')
         return redirect(url_for('lease.contracts'))
 
@@ -347,6 +354,7 @@ def approve_contract(id):
     
     db.session.commit()
 
+    log_action('同意租赁合同', user_id=current_user.id, details={'contract_id': contract.id, 'house_id': contract.house_id, 'payment_count': payment_count})
     flash(f'已同意出租请求，合同已生效，已生成 {payment_count} 期租金账单', 'success')
     return redirect(url_for('lease.contracts'))
 
@@ -369,6 +377,7 @@ def reject_contract(id):
     contract.status = 'rejected'
     db.session.commit()
 
+    log_action('拒绝租赁合同', user_id=current_user.id, details={'contract_id': contract.id, 'house_id': contract.house_id})
     flash('已拒绝出租请求', 'success')
     return redirect(url_for('lease.contracts'))
 
@@ -387,6 +396,7 @@ def cancel_contract(id):
         flash('只能取消待审批的合同', 'danger')
         return redirect(url_for('lease.contracts'))
 
+    log_action('取消合同申请', user_id=current_user.id, details={'contract_id': contract.id, 'house_id': contract.house_id})
     db.session.delete(contract)
     db.session.commit()
 
@@ -447,6 +457,7 @@ def terminate_contract(id):
     house.status = 'available'
     db.session.commit()
 
+    log_action('终止租赁合同', user_id=current_user.id, details={'contract_id': contract.id, 'house_id': contract.house_id, 'deleted_payments': deleted_count})
     if deleted_count > 0:
         flash(f'合同已终止，已删除 {deleted_count} 个未开始的租金账单', 'success')
     else:
@@ -511,6 +522,7 @@ def pay_rent(id):
     payment.payment_method = request.form.get('payment_method', 'alipay')
     db.session.commit()
 
+    log_action('支付租金', user_id=current_user.id, details={'payment_id': payment.id, 'contract_id': payment.contract_id, 'amount': payment.amount})
     flash('租金支付成功', 'success')
     return redirect(url_for('lease.payments'))
 
