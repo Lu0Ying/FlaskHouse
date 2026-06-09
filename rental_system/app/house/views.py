@@ -98,7 +98,28 @@ def delete(id):
     if house.landlord_id != current_user.id and not current_user.is_admin():
         return jsonify({'success': False, 'message': '您无权删除此房源'})
     
+    # 检查是否存在未完成的租赁合同（pending 或 active 状态）
+    active_contracts = LeaseContract.query.filter(
+        LeaseContract.house_id == house.id,
+        LeaseContract.status.in_(['pending', 'active'])
+    ).all()
+    
+    if active_contracts:
+        return jsonify({
+            'success': False,
+            'message': '该房源存在未完成的租赁合同，无法删除。请先处理完相关合同后再进行删除操作。'
+        })
+    
     try:
+        # 删除已拒绝或已终止的合同记录
+        terminated_contracts = LeaseContract.query.filter(
+            LeaseContract.house_id == house.id,
+            LeaseContract.status.in_(['rejected', 'terminated'])
+        ).all()
+        
+        for contract in terminated_contracts:
+            db.session.delete(contract)
+        
         log_action('删除房源', user_id=current_user.id, details={'house_id': house.id, 'title': house.title})
         db.session.delete(house)
         db.session.commit()

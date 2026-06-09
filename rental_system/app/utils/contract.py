@@ -74,7 +74,7 @@ def generate_rent_payments(contract):
             'amount': cycle_amount,
             'start_date': current_start,
             'end_date': actual_end,
-            'due_date': current_start,  # 付款到期日设为周期开始日
+            'due_date': actual_end,  # 付款到期日设为周期结束日
             'status': 'unpaid'
         }
         payments.append(payment)
